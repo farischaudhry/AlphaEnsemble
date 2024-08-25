@@ -4,18 +4,22 @@
   "description": "Competitive AI Hedge Fund on the Galadriel Testnet",
   "main": "index.js",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "hardhat test",
-    "deploy": "hardhat run scripts/deploy.js --network galadriel"
+    "node": "npx hardhat node",
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "generateStandardJson": "npx hardhat solidity-json"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "ethers": "^6.13.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@xyrusworx/hardhat-solidity-json": "^1.0.2",
     "hardhat": "^2.3.3",
+    "solidity-docgen": "^0.6.0-beta.36",
     "ts-node": "^10.9.0"
   },
   "author": "",
