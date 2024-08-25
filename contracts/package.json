@@ -7,7 +7,9 @@
     "node": "npx hardhat node",
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
-    "generateStandardJson": "npx hardhat solidity-json"
+    "generateStandardJson": "npx hardhat solidity-json",
+    "deployAlphaEnsembleGladriel": "npx hardhat run scripts/deployAlphaEnsemble.ts --network galadriel",
+    "deployAlphaEnsembleLocal": "npx hardhat run scripts/deployAlphaEnsemble.ts --network localhost"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
