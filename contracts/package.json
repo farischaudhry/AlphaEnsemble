@@ -1,0 +1,23 @@
+{
+  "name": "alpha-ensemble",
+  "version": "1.0.0",
+  "description": "Competitive AI Hedge Fund on the Galadriel Testnet",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js --network galadriel"
+  },
+  "dependencies": {
+    "ethers": "^6.13.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "hardhat": "^2.3.3",
+    "ts-node": "^10.9.0"
+  },
+  "author": "",
+  "license": "ISC"
+}
