@@ -6,11 +6,15 @@ async function main() {
   }
   const oracleAddress: string = process.env.ORACLE_ADDRESS;
 
-  await deployAlphaEnsemble(oracleAddress);
+  // Specify the number of agents
+  const numAgents: number = 5;
+
+  await deployAlphaEnsemble(oracleAddress, numAgents);
 }
 
-async function deployAlphaEnsemble(oracleAddress: string) {
-  const contract = await ethers.deployContract("AlphaEnsemble", [oracleAddress], {});
+async function deployAlphaEnsemble(oracleAddress: string, numAgents: number) {
+  // Pass both the oracleAddress and numAgents to the constructor
+  const contract = await ethers.deployContract("AlphaEnsemble", [oracleAddress, numAgents]);
 
   await contract.waitForDeployment();
 
