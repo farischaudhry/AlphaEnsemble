@@ -1,0 +1,26 @@
+# This is a basic robots.txt file
+
+# Allow all bots to access all content
+User-agent: *
+Allow: /
+
+# Disallow all bots from accessing the /admin/ directory
+User-agent: *
+Disallow: /admin/
+
+# Disallow a specific bot from accessing the entire site
+User-agent: BadBot
+Disallow: /
+
+# Block search engines from accessing sensitive files
+User-agent: *
+Disallow: /private/
+Disallow: /config/
+Disallow: /tmp/
+
+# Allow specific search engines full access
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
