@@ -2,8 +2,11 @@ import {HardhatUserConfig} from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@xyrusworx/hardhat-solidity-json";
 import 'solidity-docgen';
+import dotenv from 'dotenv';
+import path from 'path';
 
-require('dotenv').config()
+// Load environment variables from the shared .env file
+dotenv.config({ path: path.resolve(__dirname, '../config/.env') });
 
 const galadrielDevnet = []
 if (process.env.PRIVATE_KEY_GALADRIEL) {

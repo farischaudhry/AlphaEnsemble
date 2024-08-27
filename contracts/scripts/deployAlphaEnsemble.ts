@@ -1,4 +1,9 @@
 import { ethers } from "hardhat";
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables from the shared .env file
+dotenv.config({ path: path.resolve(__dirname, '../../config/.env') });
 
 async function main() {
   if (!process.env.ORACLE_ADDRESS) {
