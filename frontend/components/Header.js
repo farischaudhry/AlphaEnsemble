@@ -2,8 +2,10 @@ import React from 'react';
 
 function Header() {
   return (
-    <header className="App-header">
+    <header className="header">
       <h1>AlphaEnsemble</h1>
+      <div className="filters">
+      </div>
     </header>
   );
 }

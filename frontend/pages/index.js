@@ -1,14 +1,20 @@
+import React, { useEffect } from 'react';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
+import Overview from '../components/Overview';
+import InstrumentOverview from '../components/InstrumentOverview';
+import Leaderboard from '../components/Leaderboard';
 
 export default function Home() {
+  const leaderboardRef = React.useRef();
+  
   return (
-    <div className="App">
+    <div className="app">
       <Header />
-      <main>
-        <h1>Hello World</h1>
-      </main>
-      <Footer />
+      <div className="content">
+        <Overview />
+        <Leaderboard ref={leaderboardRef} />
+        <InstrumentOverview />
+      </div>
     </div>
   );
 }
