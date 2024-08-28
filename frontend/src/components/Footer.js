@@ -4,7 +4,7 @@ import './Footer.css';
 function Footer() {
   return (
     <footer className="App-footer">
-      <p>&copy; Made by Faris Chaudhry, Sriharsha Vitta, Siddhant Gadkari.</p>
+      <p>Made by Faris Chaudhry, Sriharsha Vitta, Siddhant Gadkari.</p>
     </footer>
   );
 }
