@@ -1,7 +1,7 @@
 {
   "name": "alpha-ensemble",
   "version": "1.0.0",
-  "description": "Competitive AI Hedge Fund on the Galadriel Testnet",
+  "description": "Competitive Agentic AIs using Gladriel Testnet",
   "main": "index.js",
   "scripts": {
     "node": "npx hardhat node",
