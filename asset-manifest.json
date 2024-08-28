@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/AlphaEnsemble/static/css/main.095823fb.chunk.css",
+    "main.js": "/AlphaEnsemble/static/js/main.d92d93e2.chunk.js",
+    "main.js.map": "/AlphaEnsemble/static/js/main.d92d93e2.chunk.js.map",
+    "runtime-main.js": "/AlphaEnsemble/static/js/runtime-main.6dd88e7e.js",
+    "runtime-main.js.map": "/AlphaEnsemble/static/js/runtime-main.6dd88e7e.js.map",
+    "static/js/2.b534cb4e.chunk.js": "/AlphaEnsemble/static/js/2.b534cb4e.chunk.js",
+    "static/js/2.b534cb4e.chunk.js.map": "/AlphaEnsemble/static/js/2.b534cb4e.chunk.js.map",
+    "index.html": "/AlphaEnsemble/index.html",
+    "static/css/main.095823fb.chunk.css.map": "/AlphaEnsemble/static/css/main.095823fb.chunk.css.map",
+    "static/js/2.b534cb4e.chunk.js.LICENSE.txt": "/AlphaEnsemble/static/js/2.b534cb4e.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.6dd88e7e.js",
+    "static/js/2.b534cb4e.chunk.js",
+    "static/css/main.095823fb.chunk.css",
+    "static/js/main.d92d93e2.chunk.js"
+  ]
+}
