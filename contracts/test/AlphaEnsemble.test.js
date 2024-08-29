@@ -39,4 +39,15 @@ describe("AlphaEnsemble Contract", function () {
                 anyValue
             );
     });
+
+    // Requires updateAgentPositionsFromLLMResponse to be public
+    // it("Should emit PositionsUpdated event when LLM response is handled", async function () {
+    //     // Mock the LLM response handling (this simulates the asynchronous response)
+    //     const agentRunId = 0; // Assuming the first run has ID 0
+    //     const mockLlmResponse = '{\'BTC\': 10, \'ETH\': -5}';
+
+    //     // Call the function to handle the LLM response
+    //     await expect(alphaEnsemble.updateAgentPositionsFromLLMResponse(agentRunId, mockLlmResponse))
+    //         .to.emit(alphaEnsemble, "PositionsUpdated")
+    // });
 });

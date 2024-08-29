@@ -232,8 +232,45 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
         run.is_finished = true;
     }
 
-    function updateAgentPositionsFromLLMResponse(uint agentRunId, string memory llmResponse) internal {
+    function updateAgentPositionsFromLLMResponse(uint agentRunId, string memory llmResponse) public {
+        // Parsing the LLM response which is expected to be in the form {"BTC": 10, "ETH": -5, ...}
 
+        // Strip leading/trailing braces {}
+        bytes memory responseBytes = bytes(llmResponse);
+        require(responseBytes.length > 2, "Invalid LLM response format");
+        bytes memory trimmedResponse = new bytes(responseBytes.length - 2);
+
+        for (uint i = 1; i < responseBytes.length - 1; i++) {
+            trimmedResponse[i - 1] = responseBytes[i];
+        }
+
+        // Split the string by ","
+        string[] memory keyValuePairs = splitString(string(trimmedResponse), ",");
+        string[] memory assets = new string[](keyValuePairs.length);
+        int256[] memory positions = new int256[](keyValuePairs.length);
+
+        for (uint i = 0; i < keyValuePairs.length; i++) {
+            // Split each pair by ":"
+            string[] memory pair = splitString(keyValuePairs[i], ":");
+            require(pair.length == 2, "Invalid key-value pair format in LLM response");
+
+            // Extract asset ticker and position value
+            string memory asset = stripQuotes(pair[0]);
+            string memory positionStr = stripQuotes(pair[1]);
+
+            // Remove any leading or trailing whitespace from the position string
+            positionStr = trimWhitespace(positionStr);
+
+            // Parse the position value
+            int256 position = parseInt(positionStr);
+
+            assets[i] = asset;
+            positions[i] = position;
+        }
+
+        // Update the agent's positions using the setPositions function
+        AgentRun storage run = agentRuns[agentRunId];
+        setPositions(run.agentId, assets, positions);
     }
 
     /**
@@ -333,11 +370,17 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
 
     function stripQuotes(string memory str) internal pure returns (string memory) {
         bytes memory strBytes = bytes(str);
-        bytes memory result = new bytes(strBytes.length - 2);
-        for (uint i = 1; i < strBytes.length - 1; i++) {
-            result[i - 1] = strBytes[i];
+        if (strBytes.length >= 2 &&
+            (strBytes[0] == '"' && strBytes[strBytes.length - 1] == '"') ||
+            (strBytes[0] == "'" && strBytes[strBytes.length - 1] == "'")
+        ) {
+            bytes memory result = new bytes(strBytes.length - 2);
+            for (uint i = 1; i < strBytes.length - 1; i++) {
+                result[i - 1] = strBytes[i];
+            }
+            return string(result);
         }
-        return string(result);
+        return str; // Return as is if not quoted
     }
 
     function parseInt(string memory str) internal pure returns (int256) {
@@ -346,7 +389,8 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
         bool isNegative = false;
         uint i = 0;
 
-        if (strBytes[0] == "-") {
+        // Check for a negative sign
+        if (strBytes.length > 0 && strBytes[0] == "-") {
             isNegative = true;
             i = 1;
         }
@@ -357,6 +401,29 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
         }
 
         return isNegative ? -result : result;
+    }
+
+    function trimWhitespace(string memory str) internal pure returns (string memory) {
+        bytes memory strBytes = bytes(str);
+        uint start = 0;
+        uint end = strBytes.length;
+
+        // Find the first non-whitespace character
+        while (start < end && (strBytes[start] == 0x20)) {
+            start++;
+        }
+
+        // Find the last non-whitespace character
+        while (end > start && (strBytes[end - 1] == 0x20)) {
+            end--;
+        }
+
+        bytes memory result = new bytes(end - start);
+        for (uint i = start; i < end; i++) {
+            result[i - start] = strBytes[i];
+        }
+
+        return string(result);
     }
 
     // ====================================================================================================
