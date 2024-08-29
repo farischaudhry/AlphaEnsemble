@@ -33,6 +33,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     // Events
     event AssetPricesUpdated(string[] assets, uint256[] prices);
     event PositionsUpdated(uint indexed agentID, string[] assets, int256[] positions);
+    event PnLUpdated(uint indexed agentID, int256 pnl);
     event AgentRunCompleted(uint indexed agentRunId, uint indexed agentId, string result);
 
     // Mapping from asset ticker (e.g., "BTC", "ETH") to the Chainlink price feed contract address
@@ -95,12 +96,30 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
 
         // Emit the AssetPricesUpdated event with the updated assets and prices
         emit AssetPricesUpdated(assets, prices);
+
+        updatePnL();
+    }
+
+    function updatePnL() public {
+        for (uint256 i = 0; i < agents.length; i++) {
+            int256 pnl = 0;
+
+            for (uint256 j = 0; j < assetKeys.length; j++) {
+                string memory asset = assetKeys[j];
+                int256 position = agents[i].positions[asset];
+                uint256 price = assetPrices[asset];
+                pnl += position * int256(price);
+            }
+
+            agents[i].pnl = pnl;
+            emit PnLUpdated(i, pnl);
+        }
     }
 
     /**
      * @notice Update the positions of the agents based on the latest asset price
      */
-    function updatePositions() public {
+    function updatePositions() internal {
         for (uint256 i = 0; i < agents.length; i++) {
             // Generate the query and start new runs for each agent
             string memory query = generateLLMQuery(i);

@@ -31,14 +31,18 @@ describe("AlphaEnsemble Contract", function () {
         await alphaEnsemble.setPriceFeed("ETH", mockPriceFeed.target);
     });
 
-    it("Should emit AssetPricesUpdated event with correct data", async function () {
+    it("Should emit AssetPricesUpdated event and PnLUpdated event", async function () {
         await expect(alphaEnsemble.updateAssetPrices())
             .to.emit(alphaEnsemble, "AssetPricesUpdated")
             .withArgs(
                 ["BTC", "ETH"],
                 anyValue
             );
+
+        await expect(alphaEnsemble.updatePnL())
+            .to.emit(alphaEnsemble, "PnLUpdated")
     });
+
 
     // Requires updateAgentPositionsFromLLMResponse to be public
     // it("Should emit PositionsUpdated event when LLM response is handled", async function () {
