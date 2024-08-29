@@ -2,12 +2,15 @@
 pragma solidity ^0.8.9;
 
 import "./interfaces/IOracle.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-contract AlphaEnsemble {
+contract AlphaEnsemble is KeeperCompatibleInterface {
+    address public oracleAddress;
 
     struct Agent {
         int256 pnl; // Profit and Loss
-        mapping(string => uint256) positions; // Position of each asset (TICKER => POSITION)
+        mapping(string => int256) positions; // Position of each asset (TICKER => POSITION)
     }
 
     struct AgentRun {
@@ -20,16 +23,76 @@ contract AlphaEnsemble {
     Agent[] public agents;
     mapping(uint => AgentRun) public agentRuns;
     uint public agentRunCount; // Counter for the number of agent runs
-    uint256 public lastUpdateTime; // Timestamp of last update
 
-    address public oracleAddress;
+    uint256 public priceUpdateInterval = 10 seconds;
+    uint256 public llmUpdateInterval = 5 minutes;
+    uint256 public lastPriceUpdateTime;
+    uint256 public lastLlmUpdateTime;
 
+    // Events
+    event AssetPricesUpdated(string[] assets, uint256[] prices);
     event PositionsUpdated(uint indexed agentID, string[] assets, int256[] positions);
-    event AgentRunCreated(uint indexed agentId, uint indexed runId);
+
+    // Mapping from asset ticker (e.g., "BTC", "ETH") to the Chainlink price feed contract address
+    mapping(string => address) public priceFeeds;
+    // Mapping from asset ticker (e.g., "BTC", "ETH") to the price of the asset
+    mapping(string => uint256) public assetPrices;
+    // Array of asset tickers
+    string[] public assetKeys = ["BTC", "ETH"];
 
     constructor(address _oracleAddress, uint256 numAgents) {
         oracleAddress = _oracleAddress; // Set the oracle address during contract deployment
         initializeAgents(numAgents); // Initialize the fixed number of agents
+        lastPriceUpdateTime = block.timestamp;
+        lastLlmUpdateTime = block.timestamp;
+
+        // Set the price feed addresses for the assets
+        setPriceFeed("BTC", 0x6135b13325bfC4B00278B4abC5e20bbce2D6580e);
+        setPriceFeed("ETH", 0x9326BFA02ADD2366b30bacB125260Af641031331);
+    }
+
+    // Check if the upkeep is needed (either for price update or LLM update)
+    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
+        bool priceUpdateNeeded = (block.timestamp - lastPriceUpdateTime) > priceUpdateInterval;
+        bool llmUpdateNeeded = (block.timestamp - lastLlmUpdateTime) > llmUpdateInterval;
+        upkeepNeeded = priceUpdateNeeded || llmUpdateNeeded;
+        performData = "";
+    }
+
+    // Perform the upkeep based on which update is required
+    function performUpkeep(bytes calldata) external override {
+        if ((block.timestamp - lastPriceUpdateTime) > priceUpdateInterval) {
+            lastPriceUpdateTime = block.timestamp;
+            updateAssetPrices(); // Implement this function to update prices
+        }
+    }
+
+    function updateAssetPrices() public {
+        // Declare and initialize the assets array with asset names from assetKeys
+        string[] memory assets = new string[](assetKeys.length);
+
+        // Declare the prices array to hold the updated prices
+        uint256[] memory prices = new uint256[](assetKeys.length);
+
+        // Iterate over the assets and update their prices
+        for (uint256 i = 0; i < assetKeys.length; i++) {
+            string memory asset = assetKeys[i];
+            address feedAddress = priceFeeds[asset];
+            require(feedAddress != address(0), "Price feed not set for asset");
+
+            // Fetch the latest price from the Chainlink Aggregator
+            AggregatorV3Interface priceFeed = AggregatorV3Interface(feedAddress);
+            (, int256 price,,,) = priceFeed.latestRoundData();
+            require(price > 0, "Invalid price retrieved");
+
+            uint256 adjustedPrice = uint256(price);
+            assetPrices[asset] = adjustedPrice;
+            prices[i] = adjustedPrice;
+            assets[i] = asset;
+        }
+
+        // Emit the AssetPricesUpdated event with the updated assets and prices
+        emit AssetPricesUpdated(assets, prices);
     }
 
     /**
@@ -77,8 +140,6 @@ contract AlphaEnsemble {
 
         // Trigger an LLM  call via the oracle
         IOracle(oracleAddress).createOpenAiLlmCall(agentRunCount, getDefaultOpenAiConfig());
-
-        emit AgentRunCreated(agentId, agentRunCount);
 
         return agentRunCount++;
     }
@@ -132,14 +193,6 @@ contract AlphaEnsemble {
     }
 
     /**
-     * @notice Ensures the caller is the oracle contract.
-     */
-    modifier onlyOracle() {
-        require(msg.sender == oracleAddress, "Only Oracle can call this function");
-        _;
-    }
-
-    /**
      * @notice Compares two strings for equality.
      * @param a The first string.
      * @param b The second string.
@@ -147,5 +200,26 @@ contract AlphaEnsemble {
      */
     function compareStrings(string memory a, string memory b) private pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+    }
+
+    /**
+     *
+     * @param asset Asset ticker (e.g., "BTC", "ETH")
+     * @param feedAddress Price feed contract address for the asset
+     */
+    function setPriceFeed(string memory asset, address feedAddress) public {
+        priceFeeds[asset] = feedAddress;
+    }
+
+    // ====================================================================================================
+    // Modifiers
+    // ====================================================================================================
+
+    /**
+     * @notice Ensures the caller is the oracle contract.
+     */
+    modifier onlyOracle() {
+        require(msg.sender == oracleAddress, "Only Oracle can call this function");
+        _;
     }
 }

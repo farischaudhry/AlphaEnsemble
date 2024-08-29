@@ -1,29 +1,42 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const dotenv = require('dotenv');
 
 // Load environment variables from .env file
 dotenv.config({ path: '../../config/.env' });
 
-describe("AlphaEnsemble", function () {
-  let AlphaEnsemble, alphaEnsemble, owner, addr1, addr2;
-  const oracleAddress = process.env.ORACLE_ADDRESS;
-  const numAgents = 5;
+describe("AlphaEnsemble Contract", function () {
+    const oracleAddress = process.env.ORACLE_ADDRESS;
+    let alphaEnsemble;
+    let owner;
+    let mockPriceFeed;
 
-  beforeEach(async function () {
-    // Get the ContractFactory and Signers here.
-    AlphaEnsemble = await ethers.getContractFactory("AlphaEnsemble");
-    [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
+    beforeEach(async function () {
+        [owner] = await ethers.getSigners();
 
-    // Deploy an instance of the AlphaEnsemble contract
-    alphaEnsemble = await AlphaEnsemble.deploy(oracleAddress, numAgents);
-  });
+        // Deploy Mock Price Feeds
+        const MockV3Aggregator = await ethers.getContractFactory("MockV3Aggregator");
 
-  it("Should deploy with the correct oracle address and number of agents", async function () {
-    expect(await alphaEnsemble.oracleAddress()).to.equal(oracleAddress);
+        mockPriceFeed = await MockV3Aggregator.deploy();
+        mockPriceFeed.waitForDeployment();
 
-    // Verify the PnL of the first agent is 0
-    const pnl = await alphaEnsemble.getPnl(0);
-    expect(pnl).to.equal(0);
-  });
+        // Deploy AlphaEnsemble Contract
+        const AlphaEnsemble = await ethers.getContractFactory("AlphaEnsemble");
+        alphaEnsemble = await AlphaEnsemble.deploy(oracleAddress, 5);
+        alphaEnsemble.waitForDeployment();
+
+        // Set Mock Price Feeds
+        await alphaEnsemble.setPriceFeed("BTC", mockPriceFeed.target);
+        await alphaEnsemble.setPriceFeed("ETH", mockPriceFeed.target);
+    });
+
+    it("Should emit AssetPricesUpdated event with correct data", async function () {
+        await expect(alphaEnsemble.updateAssetPrices())
+            .to.emit(alphaEnsemble, "AssetPricesUpdated")
+            .withArgs(
+                ["BTC", "ETH"],
+                anyValue
+            );
+    });
 });
