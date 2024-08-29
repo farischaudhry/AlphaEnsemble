@@ -26,14 +26,14 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     uint public agentRunCount; // Counter for the number of agent runs
 
     uint256 public priceUpdateInterval = 10 seconds;
-    uint256 public llmUpdateInterval = 2 minutes;
+    uint256 public llmUpdateInterval = 30 seconds;
     uint256 public lastPriceUpdateTime;
     uint256 public lastLlmUpdateTime;
 
     // Events
     event AssetPricesUpdated(string[] assets, uint256[] prices);
     event PositionsUpdated(uint indexed agentID, string[] assets, int256[] positions);
-    event AgentRunCompleted(uint index agentRunId, uint indexed agentId, string result)
+    event AgentRunCompleted(uint indexed agentRunId, uint indexed agentId, string result);
 
     // Mapping from asset ticker (e.g., "BTC", "ETH") to the Chainlink price feed contract address
     mapping(string => address) public priceFeeds;
@@ -104,7 +104,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
         for (uint256 i = 0; i < agents.length; i++) {
             // Generate the query and start new runs for each agent
             string memory query = generateLLMQuery(i);
-            uint agentRunId =  startAgentRun(i, query, 1);
+            startAgentRun(i, query, 1);
         }
     }
 
@@ -273,7 +273,94 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     }
 
     // ====================================================================================================
-    // Helper functions
+    // Parsing functions
+    // ====================================================================================================
+
+    function splitString(string memory str, string memory delimiter) internal pure returns (string[] memory) {
+        bytes memory strBytes = bytes(str);
+        bytes memory delimiterBytes = bytes(delimiter);
+        uint delimiterLength = delimiterBytes.length;
+
+        require(delimiterLength > 0, "Delimiter cannot be empty");
+
+        // Count occurrences of the delimiter in the string
+        uint count = 1;
+        for (uint i = 0; i < strBytes.length - delimiterLength + 1; i++) {
+            bool matchFound = true;
+            for (uint j = 0; j < delimiterLength; j++) {
+                if (strBytes[i + j] != delimiterBytes[j]) {
+                    matchFound = false;
+                    break;
+                }
+            }
+            if (matchFound) {
+                count++;
+            }
+        }
+
+        // Split the string
+        string[] memory parts = new string[](count);
+        uint partIndex = 0;
+        uint start = 0;
+
+        for (uint i = 0; i < strBytes.length - delimiterLength + 1; i++) {
+            bool matchFound = true;
+            for (uint j = 0; j < delimiterLength; j++) {
+                if (strBytes[i + j] != delimiterBytes[j]) {
+                    matchFound = false;
+                    break;
+                }
+            }
+            if (matchFound) {
+                parts[partIndex] = substring(str, start, i);
+                partIndex++;
+                start = i + delimiterLength;
+            }
+        }
+        parts[partIndex] = substring(str, start, strBytes.length);
+
+        return parts;
+    }
+
+    function substring(string memory str, uint startIndex, uint endIndex) internal pure returns (string memory) {
+        bytes memory strBytes = bytes(str);
+        bytes memory result = new bytes(endIndex - startIndex);
+        for (uint i = startIndex; i < endIndex; i++) {
+            result[i - startIndex] = strBytes[i];
+        }
+        return string(result);
+    }
+
+    function stripQuotes(string memory str) internal pure returns (string memory) {
+        bytes memory strBytes = bytes(str);
+        bytes memory result = new bytes(strBytes.length - 2);
+        for (uint i = 1; i < strBytes.length - 1; i++) {
+            result[i - 1] = strBytes[i];
+        }
+        return string(result);
+    }
+
+    function parseInt(string memory str) internal pure returns (int256) {
+        bytes memory strBytes = bytes(str);
+        int256 result = 0;
+        bool isNegative = false;
+        uint i = 0;
+
+        if (strBytes[0] == "-") {
+            isNegative = true;
+            i = 1;
+        }
+
+        for (; i < strBytes.length; i++) {
+            require(strBytes[i] >= "0" && strBytes[i] <= "9", "Invalid integer string");
+            result = result * 10 + (int256(uint256(uint8(strBytes[i])) - 48));
+        }
+
+        return isNegative ? -result : result;
+    }
+
+    // ====================================================================================================
+    // Utility functions
     // ====================================================================================================
 
     /**
