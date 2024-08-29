@@ -35,9 +35,6 @@ async function deployAlphaEnsemble(oracleAddress: string, numAgents: number) {
   // Wait for the deployment to complete
   const deployedContract = await contract.waitForDeployment();
 
-  // Log the deployed contract address
-  console.log(`AlphaEnsemble contract deployed to: ${deployedContract.target}`);
-
   return deployedContract;
 }
 

@@ -39,8 +39,19 @@ contract AlphaEnsemble {
     function initializeAgents(uint256 numAgents) private {
         // Add an agent to the agents array
         for (uint256 i = 0; i < numAgents; i++) {
-            agents.push();
+            Agent storage newAgent = agents.push();
+            newAgent.pnl = 0;
         }
+    }
+
+    /**
+     * @notice Get the PnL for a specific agent
+     * @param agentId ID of the agent
+     * @return pnl PnL of the agent
+     */
+    function getPnl(uint agentId) external view returns (int256) {
+        require(agentId < agents.length, "Invalid agent ID");
+        return agents[agentId].pnl;
     }
 
     /**
