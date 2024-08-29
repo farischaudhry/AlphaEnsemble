@@ -18,6 +18,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
         uint responsesCount;
         uint8 max_iterations;
         bool is_finished;
+        uint agentId;
     }
 
     Agent[] public agents;
@@ -25,13 +26,14 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     uint public agentRunCount; // Counter for the number of agent runs
 
     uint256 public priceUpdateInterval = 10 seconds;
-    uint256 public llmUpdateInterval = 5 minutes;
+    uint256 public llmUpdateInterval = 2 minutes;
     uint256 public lastPriceUpdateTime;
     uint256 public lastLlmUpdateTime;
 
     // Events
     event AssetPricesUpdated(string[] assets, uint256[] prices);
     event PositionsUpdated(uint indexed agentID, string[] assets, int256[] positions);
+    event AgentRunCompleted(uint index agentRunId, uint indexed agentId, string result)
 
     // Mapping from asset ticker (e.g., "BTC", "ETH") to the Chainlink price feed contract address
     mapping(string => address) public priceFeeds;
@@ -46,9 +48,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
         lastPriceUpdateTime = block.timestamp;
         lastLlmUpdateTime = block.timestamp;
 
-        // Set the price feed addresses for the assets
-        setPriceFeed("BTC", 0x6135b13325bfC4B00278B4abC5e20bbce2D6580e);
-        setPriceFeed("ETH", 0x9326BFA02ADD2366b30bacB125260Af641031331);
+        // Set the Chainlink price feed contract addresses for the assets
     }
 
     // Check if the upkeep is needed (either for price update or LLM update)
@@ -63,15 +63,17 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     function performUpkeep(bytes calldata) external override {
         if ((block.timestamp - lastPriceUpdateTime) > priceUpdateInterval) {
             lastPriceUpdateTime = block.timestamp;
-            updateAssetPrices(); // Implement this function to update prices
+            updateAssetPrices();
+        }
+
+        if ((block.timestamp - lastLlmUpdateTime) > llmUpdateInterval) {
+            lastLlmUpdateTime = block.timestamp;
+            updatePositions();
         }
     }
 
     function updateAssetPrices() public {
-        // Declare and initialize the assets array with asset names from assetKeys
         string[] memory assets = new string[](assetKeys.length);
-
-        // Declare the prices array to hold the updated prices
         uint256[] memory prices = new uint256[](assetKeys.length);
 
         // Iterate over the assets and update their prices
@@ -96,6 +98,17 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     }
 
     /**
+     * @notice Update the positions of the agents based on the latest asset price
+     */
+    function updatePositions() public {
+        for (uint256 i = 0; i < agents.length; i++) {
+            // Generate the query and start new runs for each agent
+            string memory query = generateLLMQuery(i);
+            uint agentRunId =  startAgentRun(i, query, 1);
+        }
+    }
+
+    /**
      * @notice Initialize the fixed number of agents
      * @param numAgents Number of agents to initialize
      */
@@ -104,6 +117,12 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
         for (uint256 i = 0; i < numAgents; i++) {
             Agent storage newAgent = agents.push();
             newAgent.pnl = 0;
+
+            // Initialize the positions of the assets for the agent
+            for (uint256 j = 0; j < assetKeys.length; j++) {
+                string memory asset = assetKeys[j];
+                newAgent.positions[asset] = 0;
+            }
         }
     }
 
@@ -115,6 +134,54 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     function getPnl(uint agentId) external view returns (int256) {
         require(agentId < agents.length, "Invalid agent ID");
         return agents[agentId].pnl;
+    }
+
+    /**
+     * @notice Get the positions of the assets for a specific agent
+     * @param agentId ID of the agent
+     * @return assets Array of asset tickers
+     * @return positions Array of positions for each asset
+     */
+    function getPositions(uint agentId) external view returns (string[] memory assets, int256[] memory positions) {
+        require(agentId < agents.length, "Invalid agent ID");
+
+        assets = assetKeys;
+        positions = new int256[](assetKeys.length);
+
+        for (uint256 i = 0; i < assetKeys.length; i++) {
+            string memory asset = assetKeys[i];
+            positions[i] = agents[agentId].positions[asset];
+        }
+    }
+
+    /**
+     * @notice Sets the positions for multiple assets for a given agent
+     * @param agentId ID of the agent
+     * @param assets Array of asset tickers (e.g., ["BTC", "ETH"])
+     * @param positions Array of new position values for the corresponding assets
+     */
+    function setPositions(uint agentId, string[] memory assets, int256[] memory positions) public {
+        require(agentId < agents.length, "Invalid agent ID");
+        require(assets.length == positions.length, "Assets and positions arrays must have the same length");
+
+        for (uint256 i = 0; i < assets.length; i++) {
+            require(bytes(assets[i]).length > 0, "Asset ticker cannot be empty");
+
+            // Update the position for each asset
+            agents[agentId].positions[assets[i]] = positions[i];
+        }
+
+        // Emit an event to notify that the positions have been updated
+        emit PositionsUpdated(agentId, assets, positions);
+    }
+
+    /**
+     *
+     * @param asset Asset ticker (e.g., "BTC", "ETH")
+     * @param feedAddress Price feed contract address for the asset
+     */
+    function setPriceFeed(string memory asset, address feedAddress) public {
+        priceFeeds[asset] = feedAddress;
     }
 
     /**
@@ -131,17 +198,78 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
         run.responsesCount = 0;
         run.max_iterations = max_iterations;
 
-        // Initlize message with a system prompt and the user query
-        IOracle.Message memory systemMessage = createTextMessage("system", "");
+        // Initialize the system message with a standard prompt to instruct the LLM
+        string memory systemPrompt = "You are an AI agent tasked with optimizing asset positions for a financial portfolio. ";
+        systemPrompt = string(abi.encodePacked(systemPrompt, "For your agent, provide the new positions for each asset in the format: {'BTC': <position>, 'ETH': <position>} and so on."));
+
+        IOracle.Message memory systemMessage = createTextMessage("system", systemPrompt);
         run.messages.push(systemMessage);
 
+        // Initialize the user message with the specific query for this agent
         IOracle.Message memory userMessage = createTextMessage("user", query);
         run.messages.push(userMessage);
 
-        // Trigger an LLM  call via the oracle
+        // Trigger an LLM call via the oracle
         IOracle(oracleAddress).createOpenAiLlmCall(agentRunCount, getDefaultOpenAiConfig());
 
         return agentRunCount++;
+    }
+
+    function handleLlmResponse(uint agentRunId) public {
+        // Fetch the AgentRun data using the provided agentRunId
+        AgentRun storage run = agentRuns[agentRunId];
+
+        // Emit the AgentRunCompleted event before processing the response
+        emit AgentRunCompleted(agentRunId, run.agentId, run.messages[run.responsesCount - 1].content[0].value);
+
+        // Process the LLM response
+        string memory llmResponse = run.messages[run.responsesCount - 1].content[0].value;
+
+        // Update the agent's positions based on the LLM response
+        updateAgentPositionsFromLLMResponse(agentRunId, llmResponse);
+
+        // Mark the agentRun as finished
+        run.is_finished = true;
+    }
+
+    function updateAgentPositionsFromLLMResponse(uint agentRunId, string memory llmResponse) internal {
+
+    }
+
+    /**
+     *
+     * @param agentId ID of the agent
+     */
+    function generateLLMQuery(uint256 agentId) internal view returns (string memory) {
+        // Start with the specific agent's information
+        string memory query = "You are agent ";
+        query = string(abi.encodePacked(query, uint2str(agentId), ". Your current positions are: "));
+
+        for (uint256 i = 0; i < assetKeys.length; i++) {
+            string memory asset = assetKeys[i];
+            int256 position = agents[agentId].positions[asset];
+            query = string(abi.encodePacked(query, asset, "=", int2str(position), "; "));
+        }
+
+        // Add information about other agents
+        query = string(abi.encodePacked(query, " Other agents' positions and total PnL: "));
+
+        for (uint256 j = 0; j < agents.length; j++) {
+            if (j != agentId) {  // Exclude the current agent's own info
+                query = string(abi.encodePacked(query, "Agent ", uint2str(j), " - PnL: ", int2str(agents[j].pnl), "; Positions: "));
+
+                for (uint256 k = 0; k < assetKeys.length; k++) {
+                    string memory asset = assetKeys[k];
+                    int256 otherPosition = agents[j].positions[asset];
+                    query = string(abi.encodePacked(query, asset, "=", int2str(otherPosition), "; "));
+                }
+
+                query = string(abi.encodePacked(query, " "));
+            }
+        }
+
+        query = string(abi.encodePacked(query, " Optimize your positions based on this information."));
+        return query;
     }
 
     // ====================================================================================================
@@ -154,7 +282,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
      * @param content The content of the message.
      * @return The created message.
      */
-    function createTextMessage(string memory role, string memory content) private pure returns (IOracle.Message memory) {
+    function createTextMessage(string memory role, string memory content) internal pure returns (IOracle.Message memory) {
         IOracle.Content[] memory contents = new IOracle.Content[](1);
 
 
@@ -174,7 +302,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     /**
      * @notice Returns the default configuration for the OpenAI request.
      */
-    function getDefaultOpenAiConfig() private pure returns (IOracle.OpenAiRequest memory) {
+    function getDefaultOpenAiConfig() internal pure returns (IOracle.OpenAiRequest memory) {
         return IOracle.OpenAiRequest({
             model: "gpt-4-turbo",
             frequencyPenalty: 0,
@@ -198,17 +326,66 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
      * @param b The second string.
      * @return True if the strings are equal, false otherwise.
      */
-    function compareStrings(string memory a, string memory b) private pure returns (bool) {
+    function compareStrings(string memory a, string memory b) internal pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 
     /**
      *
-     * @param asset Asset ticker (e.g., "BTC", "ETH")
-     * @param feedAddress Price feed contract address for the asset
+     * @param _i The uint to convert to a string
      */
-    function setPriceFeed(string memory asset, address feedAddress) public {
-        priceFeeds[asset] = feedAddress;
+    function uint2str(uint _i) internal pure returns (string memory _uintAsString) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint j = _i;
+        uint len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(len);
+        uint k = len;
+        while (_i != 0) {
+            k = k-1;
+            uint8 temp = (48 + uint8(_i - _i / 10 * 10));
+            bytes1 b1 = bytes1(temp);
+            bstr[k] = b1;
+            _i /= 10;
+        }
+        return string(bstr);
+    }
+
+    /**
+     *
+     * @param _i The int to convert to a string
+     */
+    function int2str(int _i) internal pure returns (string memory) {
+        if (_i == 0) {
+            return "0";
+        }
+        bool negative = _i < 0;
+        uint i = uint(negative ? -_i : _i);
+        uint j = i;
+        uint len;
+        while (j != 0) {
+            len++;
+            j /= 10;
+        }
+        if (negative) ++len;
+        bytes memory bstr = new bytes(len);
+        uint k = len;
+        if (negative) {
+            bstr[0] = '-';
+        }
+        while (i != 0) {
+            k = k-1;
+            uint8 temp = (48 + uint8(i - i / 10 * 10));
+            bytes1 b1 = bytes1(temp);
+            bstr[k] = b1;
+            i /= 10;
+        }
+        return string(bstr);
     }
 
     // ====================================================================================================
