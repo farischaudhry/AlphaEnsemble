@@ -15,6 +15,6 @@ contract MockV3Aggregator {
     {
         // Generate a pseudo-random number using block.timestamp and block.prevrandao
         int256 randomPrice = int256(uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao))) % 1000000);
-        return (0, 1, block.timestamp, block.timestamp, 0);
+        return (0, randomPrice, block.timestamp, block.timestamp, 0);
     }
 }

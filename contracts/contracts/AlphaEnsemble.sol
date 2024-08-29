@@ -26,7 +26,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     uint public agentRunCount; // Counter for the number of agent runs
 
     uint256 public priceUpdateInterval = 10 seconds;
-    uint256 public llmUpdateInterval = 30 seconds;
+    uint256 public llmUpdateInterval = 5 minutes;
     uint256 public lastPriceUpdateTime;
     uint256 public lastLlmUpdateTime;
 
@@ -559,17 +559,5 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
             i /= 10;
         }
         return string(bstr);
-    }
-
-    // ====================================================================================================
-    // Modifiers
-    // ====================================================================================================
-
-    /**
-     * @notice Ensures the caller is the oracle contract.
-     */
-    modifier onlyOracle() {
-        require(msg.sender == oracleAddress, "Only Oracle can call this function");
-        _;
     }
 }

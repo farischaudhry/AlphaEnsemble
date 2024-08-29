@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { listenToEvents } from '../contracts/contractInteraction';
 
 function Leaderboard() {
-  const [leaderboard, setLeaderboard] = useState([
-    { rank: 1, team: 'team-001', pnl: 13162.20, hourlyPnl: 44.10, hourlySharpe: 0.01, position: 0, delta: 0.00, vega: 0.00 }
-    // Add initial entries if needed
-  ]);
+  const [leaderboard, setLeaderboard] = useState([]);
 
-  // Function to add or update an entry
+  useEffect(() => {
+    listenToEvents(() => {}, updateLeaderboard, updatePnL);
+
+    // Cleanup listener when component unmounts
+    return () => {
+      // Optionally remove listeners here
+    };
+  }, []);
+
   const updateLeaderboard = (newEntry) => {
     setLeaderboard(prevLeaderboard => {
       const existingEntryIndex = prevLeaderboard.findIndex(entry => entry.team === newEntry.team);
-  
+
       let updatedLeaderboard;
-  
+
       if (existingEntryIndex !== -1) {
         // Update existing entry
         updatedLeaderboard = [...prevLeaderboard];
@@ -21,12 +27,27 @@ function Leaderboard() {
         // Add new entry
         updatedLeaderboard = [...prevLeaderboard, newEntry];
       }
-  
-      // Sort the leaderboard by rank
-      return updatedLeaderboard.sort((a, b) => a.rank - b.rank);
+
+      // Sort the leaderboard by rank or PnL
+      return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl); // Example: sort by PnL descending
     });
   };
-  
+
+  const updatePnL = (agentID, pnl) => {
+    setLeaderboard(prevLeaderboard => {
+      const existingEntryIndex = prevLeaderboard.findIndex(entry => entry.team === `team-${agentID}`);
+
+      if (existingEntryIndex !== -1) {
+        // Update PnL for the existing entry
+        const updatedLeaderboard = [...prevLeaderboard];
+        updatedLeaderboard[existingEntryIndex].pnl = ethers.utils.formatUnits(pnl, 18); // Adjust formatting as necessary
+
+        return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl); // Example: sort by PnL descending
+      }
+
+      return prevLeaderboard; // No change if the entry doesn't exist
+    });
+  };
 
   return (
     <div className="leaderboard">
@@ -37,24 +58,18 @@ function Leaderboard() {
             <th>Rank</th>
             <th>Teams</th>
             <th>PnL</th>
-            <th>Hourly PnL</th>
-            <th>Hourly Sharpe</th>
             <th>Position</th>
-            <th>Delta</th>
-            <th>Vega</th>
+            {/* Add more columns as needed */}
           </tr>
         </thead>
         <tbody>
           {leaderboard.map((entry, index) => (
             <tr key={index}>
-              <td>{entry.rank}</td>
+              <td>{index + 1}</td>
               <td>{entry.team}</td>
               <td>{entry.pnl.toFixed(2)}</td>
-              <td>{entry.hourlyPnl.toFixed(2)}</td>
-              <td>{entry.hourlySharpe.toFixed(2)}</td>
               <td>{entry.position}</td>
-              <td>{entry.delta.toFixed(2)}</td>
-              <td>{entry.vega.toFixed(2)}</td>
+              {/* Add more fields as needed */}
             </tr>
           ))}
         </tbody>
