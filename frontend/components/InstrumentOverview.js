@@ -1,16 +1,61 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { listenToEvents } from '../contracts/contractInteraction';
 import styles from '../styles/InstrumentOverview.module.css';
 
 function InstrumentOverview() {
+  const [instruments, setInstruments] = useState([]);
+
+  useEffect(() => {
+    // Listen to events from the contract to update the instrument overview
+    listenToEvents(updateInstrumentOverview, () => {});
+
+    // Cleanup listener when component unmounts
+    return () => {
+      // Optionally remove listeners here if needed
+    };
+  }, []);
+
+  const updateInstrumentOverview = (newInstrumentData) => {
+    setInstruments(prevInstruments => {
+      // Map over existing instruments to find if any need updating
+      const updatedInstruments = prevInstruments.map(instrument => {
+        const matchingNewInstrument = newInstrumentData.find(
+          newInstrument => newInstrument.asset === instrument.asset
+        );
+        return matchingNewInstrument ? matchingNewInstrument : instrument;
+      });
+
+      // Add any new instruments that were not already in the list
+      newInstrumentData.forEach(newInstrument => {
+        if (!prevInstruments.some(instrument => instrument.asset === newInstrument.asset)) {
+          updatedInstruments.push(newInstrument);
+        }
+      });
+
+      // Return the updated instrument list
+      return updatedInstruments;
+    });
+  };
+
   return (
-    <div className={styles.instrumentOverview}>
+    <div className={styles['instrument-overview']}>
       <h2>Instrument Overview</h2>
-      <ul>
-        <li><span>CSCO</span> - 625 - 74.50</li>
-        <li><span>ING</span> - 200 - 203.90</li>
-        <li><span>NVDA</span> - 625 - 186.20</li>
-        {/* Add more list items based on your data */}
-      </ul>
+      <table>
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {instruments.map((instrument, index) => (
+            <tr key={index}>
+              <td>{instrument.asset}</td>
+              <td>{instrument.price}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

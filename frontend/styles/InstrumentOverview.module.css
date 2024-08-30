@@ -1,20 +1,27 @@
 .instrument-overview {
-    margin-top: 20px;
-  }
+  margin-top: 20px;
+}
 
-  .instrument-overview h2 {
-    margin-bottom: 10px;
-  }
+.instrument-overview h2 {
+  margin-bottom: 10px;
+}
 
-  .instrument-overview ul {
-    list-style-type: none;
-    padding: 0;
-  }
+.instrument-overview table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-  .instrument-overview li {
-    background-color: #28293e;
-    padding: 10px;
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: space-between;
-  }
+.instrument-overview th,
+.instrument-overview td {
+  padding: 10px;
+  border: 1px solid #28293e;
+  text-align: left;
+}
+
+.instrument-overview tbody tr:hover {
+  background-color: #34344b;
+}
+
+.instrument-overview tbody tr {
+  cursor: pointer;
+}

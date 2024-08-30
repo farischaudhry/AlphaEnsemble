@@ -18,7 +18,7 @@
     "start": "next start",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d out",
-    "simulate-keeper": "node contracts/simulateKeeper.js"
+    "simulateKeeper": "node contracts/simulateKeeper.js"
   },
   "browserslist": {
     "production": [
