@@ -1,0 +1,16 @@
+.header {
+  background-color: #282c34;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+.filters input {
+  margin-right: 10px;
+  padding: 5px;
+  background-color: #28293e;
+  border: none;
+  color: white;
+}
