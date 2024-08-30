@@ -2,12 +2,13 @@ import { ethers } from 'ethers';
 import AlphaEnsembleABI from './AlphaEnsembleABI.json';
 
 let contract;
+let provider;
 let lastCheckedBlock = 0;
 
 export async function initializeContract() {
   if (!contract) {
     // Connect to the Galadriel network using JsonRpcProvider
-    const provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_GALADRIEL_RPC_URL);
+    provider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_GALADRIEL_RPC_URL);
 
     // Use a specific wallet or account
     const wallet = new ethers.Wallet(process.env.NEXT_PUBLIC_PRIVATE_KEY_GALADRIEL, provider);
@@ -26,7 +27,7 @@ export async function pollEvents(updateInstrumentOverview, updateLeaderboard) {
     return;
   }
 
-  const latestBlock = await contract.provider.getBlockNumber();
+  const latestBlock = await provider.getBlockNumber();
 
   // Poll for AssetPricesUpdated events
   const assetPricesEvents = await contract.queryFilter("AssetPricesUpdated", lastCheckedBlock, latestBlock);

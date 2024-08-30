@@ -56,20 +56,23 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
         bool priceUpdateNeeded = (block.timestamp - lastPriceUpdateTime) > priceUpdateInterval;
         bool llmUpdateNeeded = (block.timestamp - lastLlmUpdateTime) > llmUpdateInterval;
+
         upkeepNeeded = priceUpdateNeeded || llmUpdateNeeded;
-        performData = "";
+        performData = abi.encode(priceUpdateNeeded, llmUpdateNeeded);
     }
 
-    // Perform the upkeep based on which update is required
-    function performUpkeep(bytes calldata) external override {
-        if ((block.timestamp - lastPriceUpdateTime) > priceUpdateInterval) {
-            lastPriceUpdateTime = block.timestamp;
+    // Perform the upkeep (to be called by Chainlink Keepers or manually)
+    function performUpkeep(bytes calldata performData) external {
+        (bool priceUpdateNeeded, bool llmUpdateNeeded) = abi.decode(performData, (bool, bool));
+
+        if (priceUpdateNeeded) {
             updateAssetPrices();
+            lastPriceUpdateTime = block.timestamp;
         }
 
-        if ((block.timestamp - lastLlmUpdateTime) > llmUpdateInterval) {
-            lastLlmUpdateTime = block.timestamp;
+        if (llmUpdateNeeded) {
             updatePositions();
+            lastLlmUpdateTime = block.timestamp;
         }
     }
 
