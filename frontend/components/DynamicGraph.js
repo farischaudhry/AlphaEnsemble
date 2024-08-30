@@ -1,5 +1,6 @@
 import React from 'react';
 import { Line } from 'react-chartjs-2';
+import styles from '../styles/DynamicGraph.module.css';
 
 function DynamicGraph({ agentId }) {
   if (!agentId) {
@@ -7,11 +8,11 @@ function DynamicGraph({ agentId }) {
   }
 
   const data = {
-    labels: ['Time1', 'Time2', 'Time3'],
+    labels: ['Time1', 'Time2', 'Time3'], // TODO: Add dynamic time labels
     datasets: [
       {
         label: `PnL Over Time for ${agentId}`,
-        data: [0 /* Add PnL data here */],
+        data: [10, 20, 30], // TODO: Replace with dynamic PnL data
         fill: false,
         backgroundColor: '#f97316',
         borderColor: '#f97316',
@@ -24,20 +25,36 @@ function DynamicGraph({ agentId }) {
     scales: {
       x: {
         grid: {
-          color: '#c7c7e2'
-        }
+          color: '#c7c7e2',
+        },
+        ticks: {
+          color: '#c7c7e2',
+        },
       },
       y: {
         grid: {
-          color: '#c7c7e2'
-        }
-      }
-    }
+          color: '#c7c7e2',
+        },
+        ticks: {
+          color: '#c7c7e2',
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        labels: {
+          color: '#c7c7e2',
+        },
+      },
+    },
   };
 
   return (
-    <div className="dynamic-graph">
-      <Line data={data} options={options} />
+    <div className={styles.graphContainer}>
+      <h2 className={styles.graphTitle}>Performance for Agent {agentId}</h2>
+      <div className={styles.graphCanvas}>
+        <Line data={data} options={options} />
+      </div>
     </div>
   );
 }
