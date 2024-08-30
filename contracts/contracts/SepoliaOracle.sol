@@ -19,7 +19,6 @@ contract USDPriceOracle {
         // Initialize the price feed contract addresses
         priceFeeds["AUD/USD"] = 0xB0C712f98daE15264c8E26132BCC91C40aD4d5F9;
         priceFeeds["BTC/USD"] = 0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43;
-        priceFeeds["BTC/USD_TESTING"] = 0xBe7AA9bdd6EF372950f0133dB79672645842DC99;
         priceFeeds["CSPX/USD"] = 0x4b531A318B0e44B549F3b2f824721b3D0d51930A;
         priceFeeds["CZK/USD"] = 0xC32f0A9D70A34B9E7377C10FDAd88512596f61EA;
         priceFeeds["DAI/USD"] = 0x14866185B1962B63C3Ea9E03Bc1da838bab34C19;
@@ -42,7 +41,6 @@ contract USDPriceOracle {
         // Populate the asset list
         assets.push("AUD/USD");
         assets.push("BTC/USD");
-        assets.push("BTC/USD_TESTING");
         assets.push("CSPX/USD");
         assets.push("CZK/USD");
         assets.push("DAI/USD");

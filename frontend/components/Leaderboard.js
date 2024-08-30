@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { listenToEvents } from '../contracts/contractInteraction';
+import { initializeContract, pollEvents } from '../contracts/contractInteraction';
 import styles from '../styles/Leaderboard.module.css';
 
 function Leaderboard({ onAgentSelect }) {
   const [leaderboard, setLeaderboard] = useState([]);
-
-  useEffect(() => {
-    listenToEvents(() => {}, updateLeaderboard);
-
-    // Cleanup listener when component unmounts
-    return () => {
-      // Optionally remove listeners here
-    };
-  }, []);
 
   const updateLeaderboard = (newEntry) => {
     setLeaderboard(prevLeaderboard => {
@@ -29,10 +20,25 @@ function Leaderboard({ onAgentSelect }) {
         updatedLeaderboard = [...prevLeaderboard, newEntry];
       }
 
-      // Sort leaderboard by PnL in descending order
       return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl);
     });
   };
+
+  useEffect(() => {
+    async function startPolling() {
+      // Ensure the contract is initialized
+      await initializeContract();
+
+      // Start polling after initialization
+      const intervalId = setInterval(() => {
+        pollEvents(() => {}, updateLeaderboard);
+      }, 15000);
+
+      return () => clearInterval(intervalId);  // Cleanup the interval on component unmount
+    }
+
+    startPolling();
+  }, []);
 
   const handleRowClick = (agentId) => {
     if (onAgentSelect) {
