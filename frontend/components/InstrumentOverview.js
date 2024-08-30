@@ -1,8 +1,9 @@
 import React from 'react';
+import styles from '../styles/InstrumentOverview.module.css';
 
 function InstrumentOverview() {
   return (
-    <div className="instrument-overview">
+    <div className={styles.instrumentOverview}>
       <h2>Instrument Overview</h2>
       <ul>
         <li><span>CSCO</span> - 625 - 74.50</li>

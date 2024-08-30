@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { listenToEvents } from '../contracts/contractInteraction';
+import styles from '../styles/Leaderboard.module.css';
 
 function Leaderboard({ onAgentSelect }) {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -57,7 +58,7 @@ function Leaderboard({ onAgentSelect }) {
   };
 
   return (
-    <div className="leaderboard">
+    <div className={styles.leaderboard}>
       <h2>Leaderboard</h2>
       <table>
         <thead>
