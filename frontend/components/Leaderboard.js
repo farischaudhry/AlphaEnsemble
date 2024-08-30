@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { listenToEvents } from '../contracts/contractInteraction';
 
-function Leaderboard() {
+function Leaderboard({ onAgentSelect }) {
   const [leaderboard, setLeaderboard] = useState([]);
 
   useEffect(() => {
@@ -20,7 +20,7 @@ function Leaderboard() {
       let updatedLeaderboard;
 
       if (existingEntryIndex !== -1) {
-        // Update existing entry
+         // Update existing entry
         updatedLeaderboard = [...prevLeaderboard];
         updatedLeaderboard[existingEntryIndex] = { ...updatedLeaderboard[existingEntryIndex], ...newEntry };
       } else {
@@ -28,8 +28,8 @@ function Leaderboard() {
         updatedLeaderboard = [...prevLeaderboard, newEntry];
       }
 
-      // Sort the leaderboard by rank or PnL
-      return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl); // Example: sort by PnL descending
+      // Sort leaderboard by PnL in descending order
+      return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl);
     });
   };
 
@@ -38,15 +38,22 @@ function Leaderboard() {
       const existingEntryIndex = prevLeaderboard.findIndex(entry => entry.team === `team-${agentID}`);
 
       if (existingEntryIndex !== -1) {
-        // Update PnL for the existing entry
         const updatedLeaderboard = [...prevLeaderboard];
-        updatedLeaderboard[existingEntryIndex].pnl = ethers.utils.formatUnits(pnl, 18); // Adjust formatting as necessary
+        // Update PnL for the existing entry
+        updatedLeaderboard[existingEntryIndex].pnl = ethers.utils.formatUnits(pnl, 18); // Adjust decimals as necessary
 
-        return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl); // Example: sort by PnL descending
+        return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl);
       }
 
-      return prevLeaderboard; // No change if the entry doesn't exist
+      // Return the existing leaderboard if the entry is not found
+      return prevLeaderboard;
     });
+  };
+
+  const handleRowClick = (agentId) => {
+    if (onAgentSelect) {
+      onAgentSelect(agentId);
+    }
   };
 
   return (
@@ -59,17 +66,15 @@ function Leaderboard() {
             <th>Teams</th>
             <th>PnL</th>
             <th>Position</th>
-            {/* Add more columns as needed */}
           </tr>
         </thead>
         <tbody>
           {leaderboard.map((entry, index) => (
-            <tr key={index}>
+            <tr key={index} onClick={() => handleRowClick(entry.team)}>
               <td>{index + 1}</td>
               <td>{entry.team}</td>
               <td>{entry.pnl.toFixed(2)}</td>
               <td>{entry.position}</td>
-              {/* Add more fields as needed */}
             </tr>
           ))}
         </tbody>
