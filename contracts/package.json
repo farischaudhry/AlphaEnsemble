@@ -11,7 +11,7 @@
     "deployGaladriel": "npx hardhat run scripts/deployAlphaEnsemble.ts --network galadriel",
     "deployLocal": "npx hardhat run scripts/deployAlphaEnsemble.ts --network localhost",
     "deploySepoliaOracle": "npx hardhat run scripts/deploySepoliaOracle.ts --network sepolia",
-    "deployGaladrielReciever": "npx hardhat run scripts/deployGaladrielReceiver.ts --network galadriel"
+    "deployGaladrielReceiver": "npx hardhat run scripts/deployGaladrielReceiver.ts --network galadriel"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.0",
