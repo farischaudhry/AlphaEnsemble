@@ -1,15 +1,27 @@
-// frontend/contracts/contractInteraction.js
-import { ethers, WebSocketProvider } from 'ethers';
+import { ethers } from 'ethers';
 import AlphaEnsembleABI from './AlphaEnsembleABI.json';
 
 // Temporary contract address for testing
 const contractAddress = process.env.NEXT_PUBLIC_ALPHA_ENSEMBLE_ADDRESS;
-const provider = new ethers.WebSocketProvider('ws://127.0.0.1:8545');
-const signer = await provider.getSigner();
 
-const contract = new ethers.Contract(contractAddress, AlphaEnsembleABI, signer);
+let contract;
+
+async function initializeContract() {
+    const provider = new ethers.WebSocketProvider('ws://127.0.0.1:8545');
+    const signer = await provider.getSigner();
+    contract = new ethers.Contract(contractAddress, AlphaEnsembleABI, signer);
+}
+
+initializeContract().catch(err => {
+    console.error('Failed to initialize contract:', err);
+});
 
 export function listenToEvents(updateInstrumentOverview, updateLeaderboard) {
+    if (!contract) {
+        console.error('Contract is not initialized yet.');
+        return;
+    }
+
     contract.on("AssetPricesUpdated", (assets, prices) => {
         // Handle the event data and update the InstrumentOverview component
         const instrumentData = assets.map((asset, index) => ({

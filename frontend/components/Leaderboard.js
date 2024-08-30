@@ -6,7 +6,7 @@ function Leaderboard({ onAgentSelect }) {
   const [leaderboard, setLeaderboard] = useState([]);
 
   useEffect(() => {
-    listenToEvents(() => {}, updateLeaderboard, updatePnL);
+    listenToEvents(() => {}, updateLeaderboard);
 
     // Cleanup listener when component unmounts
     return () => {
@@ -31,23 +31,6 @@ function Leaderboard({ onAgentSelect }) {
 
       // Sort leaderboard by PnL in descending order
       return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl);
-    });
-  };
-
-  const updatePnL = (agentID, pnl) => {
-    setLeaderboard(prevLeaderboard => {
-      const existingEntryIndex = prevLeaderboard.findIndex(entry => entry.team === `team-${agentID}`);
-
-      if (existingEntryIndex !== -1) {
-        const updatedLeaderboard = [...prevLeaderboard];
-        // Update PnL for the existing entry
-        updatedLeaderboard[existingEntryIndex].pnl = ethers.utils.formatUnits(pnl, 18); // Adjust decimals as necessary
-
-        return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl);
-      }
-
-      // Return the existing leaderboard if the entry is not found
-      return prevLeaderboard;
     });
   };
 
