@@ -4,12 +4,12 @@
   "description": "Competitive Agentic AIs using Gladriel Testnet",
   "main": "index.js",
   "scripts": {
-    "node": "npx hardhat node",
+    "node": "ganache-cli --server.ws=true --port 8545 --mnemonic",
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "generateStandardJson": "npx hardhat solidity-json",
-    "deployAlphaEnsembleGladriel": "npx hardhat run scripts/deployAlphaEnsemble.ts --network galadriel",
-    "deployAlphaEnsembleLocal": "npx hardhat run scripts/deployAlphaEnsemble.ts --network localhost"
+    "deployGladriel": "npx hardhat run scripts/deployAlphaEnsemble.ts --network galadriel",
+    "deployLocal": "npx hardhat run scripts/deployAlphaEnsemble.ts --network localhost"
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.0",
