@@ -15,12 +15,14 @@ export default function Home() {
   return (
     <div className="app">
       <Header />
-      <div className="content">
-        <div className="left-panel">
+      <div className="grid-container">
+        <div className="grid-item">
           <Leaderboard onAgentSelect={handleAgentSelection} />
+        </div>
+        <div className="grid-item">
           <InstrumentOverview />
         </div>
-        <div className="right-panel">
+        <div className="grid-item">
           <DynamicGraph agentId={selectedAgent} />
         </div>
       </div>
