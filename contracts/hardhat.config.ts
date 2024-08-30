@@ -17,6 +17,11 @@ if (process.env.PRIVATE_KEY_LOCALHOST) {
   localhostPrivateKeys.push(process.env.PRIVATE_KEY_LOCALHOST)
 }
 
+const sepoliaPrivateKeys: string[] = [];
+if (process.env.PRIVATE_KEY_SEPOLIA) {
+  sepoliaPrivateKeys.push(process.env.PRIVATE_KEY_SEPOLIA);
+}
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.20",
@@ -41,7 +46,12 @@ const config: HardhatUserConfig = {
       chainId: 1337,
       url: "http://127.0.0.1:8545",
       accounts: localhostPrivateKeys,
-    }
+    },
+    sepolia: {
+      chainId: 11155111, // Sepolia's chain ID
+      url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // Replace with your Infura project ID
+      accounts: sepoliaPrivateKeys,
+    },
   },
 };
 
