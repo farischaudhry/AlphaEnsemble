@@ -4,15 +4,14 @@ const MockV3AggregatorABI = require("./MockV3AggregatorABI.json");
 const MockV3AggregatorBytecode = require("./MockV3AggregatorBytecode.json");
 
 async function main() {
-  // Ensure the contract address is available
-  const contractAddress = "0x12431557f06658AeD192938B49c8738e7Bb99fDd"
+  const contractAddress = process.env.NEXT_PUBLIC_ALPHA_ENSEMBLE_ADDRESS
   if (!contractAddress) {
     throw new Error("Contract address is not set in environment variables.");
   }
 
   // Set up a provider and signer
   const provider = new ethers.JsonRpcProvider('http://127.0.0.1:8545');
-  const wallet = new ethers.Wallet("0x5ac5497b575bdf85721ce036f83f8985e88f3ed1fce2a7028d00d3cb1725ee78", provider);
+  const wallet = new ethers.Wallet(process.env.NEXT_PUBLIC_TEST_PRIVATE_KEY, provider);
 
   console.log("Deploying and setting mock price feeds...");
 

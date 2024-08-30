@@ -41,16 +41,16 @@ async function deployAlphaEnsemble(oracleAddress: string, numAgents: number) {
 // Function to save the contract address to the .env file
 async function saveContractAddress(address: string | Addressable) {
   // Define the path to the .env file
-  const envPath = path.resolve(__dirname, '../../config/.env');
+  const envPath = path.resolve(__dirname, '../../frontend/.env.local');
 
   // Read the existing content of the .env file
   let envFile = fs.readFileSync(envPath, 'utf-8');
 
   // If the ALPHA_ENSEMBLE_ADDRESS already exists, replace it. Otherwise, add it.
-  if (envFile.includes('ALPHA_ENSEMBLE_ADDRESS=')) {
-    envFile = envFile.replace(/ALPHA_ENSEMBLE_ADDRESS=.*/g, `ALPHA_ENSEMBLE_ADDRESS=${address}`);
+  if (envFile.includes('NEXT_PUBLIC_ALPHA_ENSEMBLE_ADDRESS=')) {
+    envFile = envFile.replace(/NEXT_PUBLIC_ALPHA_ENSEMBLE_ADDRESS=.*/g, `NEXT_PUBLIC_ALPHA_ENSEMBLE_ADDRESS="${address}"`);
   } else {
-    envFile += `\nALPHA_ENSEMBLE_ADDRESS=${address}\n`;
+    envFile += `\nNEXT_PUBLIC_ALPHA_ENSEMBLE_ADDRESS="${address}"\n`;
   }
 
   // Write the updated content back to the .env file

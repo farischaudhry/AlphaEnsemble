@@ -3,7 +3,7 @@ import { ethers, WebSocketProvider } from 'ethers';
 import AlphaEnsembleABI from './AlphaEnsembleABI.json';
 
 // Temporary contract address for testing
-const contractAddress = "0x12431557f06658AeD192938B49c8738e7Bb99fDd"
+const contractAddress = process.env.NEXT_PUBLIC_ALPHA_ENSEMBLE_ADDRESS;
 const provider = new ethers.WebSocketProvider('ws://127.0.0.1:8545');
 const signer = await provider.getSigner();
 
