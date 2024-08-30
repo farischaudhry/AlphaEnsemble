@@ -10,7 +10,6 @@ const signer = await provider.getSigner();
 const contract = new ethers.Contract(contractAddress, AlphaEnsembleABI, signer);
 
 export function listenToEvents(updateInstrumentOverview, updateLeaderboard) {
-    // Listen for AssetPricesUpdated event
     contract.on("AssetPricesUpdated", (assets, prices) => {
         // Handle the event data and update the InstrumentOverview component
         const instrumentData = assets.map((asset, index) => ({

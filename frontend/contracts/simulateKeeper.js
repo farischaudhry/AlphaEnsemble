@@ -3,6 +3,9 @@ const AlphaEnsembleABI = require("./AlphaEnsembleABI.json");
 const MockV3AggregatorABI = require("./MockV3AggregatorABI.json");
 const MockV3AggregatorBytecode = require("./MockV3AggregatorBytecode.json");
 
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env.local') });
+
 async function main() {
   const contractAddress = process.env.NEXT_PUBLIC_ALPHA_ENSEMBLE_ADDRESS
   if (!contractAddress) {
@@ -28,9 +31,11 @@ async function main() {
   try {
     const txSetBTC = await contract.setPriceFeed("BTC", mockPriceFeed.target);
     await txSetBTC.wait();
+    console.log("BTC price feed set.");
 
     const txSetETH = await contract.setPriceFeed("ETH", mockPriceFeed.target);
     await txSetETH.wait();
+    console.log("ETH price feed set.");
   } catch (error) {
     console.error("Error setting price feeds:", error);
   }
@@ -53,8 +58,8 @@ async function main() {
     }
   }
 
-  // Set an interval to simulate periodic calls (e.g., every 30 seconds)
-  setInterval(simulateKeepers, 30000); // 30000 ms = 30 seconds
+  // Set an interval to simulate periodic calls (e.g., every 15 seconds)
+  setInterval(simulateKeepers, 15000); // 15000 ms = 15 seconds
 }
 
 // Start the simulation
