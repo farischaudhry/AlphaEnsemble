@@ -35,7 +35,7 @@ export async function pollEvents(updateInstrumentOverview, updateLeaderboard) {
     const { assets, prices } = event.args;
     const instrumentData = assets.map((asset, index) => ({
       asset,
-      price: ethers.utils.formatUnits(prices[index], 18)  // Adjust decimals as necessary
+      price: ethers.formatUnits(prices[index], 8),
     }));
     updateInstrumentOverview(instrumentData);
   });
