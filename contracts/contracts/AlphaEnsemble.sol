@@ -4,8 +4,9 @@ pragma solidity ^0.8.9;
 import "./interfaces/IOracle.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract AlphaEnsemble is KeeperCompatibleInterface {
+contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     address public oracleAddress;
 
     struct Agent {
@@ -41,15 +42,34 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     // Mapping from asset ticker (e.g., "BTC", "ETH") to the price of the asset
     mapping(string => uint256) public assetPrices;
     // Array of asset tickers
-    string[] public assetKeys = ["BTC", "ETH"];
+    string[] public assetKeys = [
+        "AUD/USD",
+        "BTC/USD",
+        "CSPX/USD",
+        "CZK/USD",
+        "DAI/USD",
+        "ETH/USD",
+        "EUR/USD",
+        "FORTH/USD",
+        "GBP/USD",
+        "GHO/USD",
+        "IB01/USD",
+        "IBTA/USD",
+        "JPY/USD",
+        "LINK/USD",
+        "SNX/USD",
+        "SUSDE/USD",
+        "USDC/USD",
+        "USDE/USD",
+        "WSTETH/USD",
+        "XAU/USD"
+    ];
 
-    constructor(address _oracleAddress, uint256 numAgents) {
+    constructor(address _oracleAddress, uint256 numAgents) Ownable(msg.sender) {
         oracleAddress = _oracleAddress; // Set the oracle address during contract deployment
         initializeAgents(numAgents); // Initialize the fixed number of agents
         lastPriceUpdateTime = block.timestamp;
         lastLlmUpdateTime = block.timestamp;
-
-        // Set the Chainlink price feed contract addresses for the assets
     }
 
     // Check if the upkeep is needed (either for price update or LLM update)
@@ -57,7 +77,8 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
         bool priceUpdateNeeded = (block.timestamp - lastPriceUpdateTime) > priceUpdateInterval;
         bool llmUpdateNeeded = (block.timestamp - lastLlmUpdateTime) > llmUpdateInterval;
 
-        upkeepNeeded = priceUpdateNeeded || llmUpdateNeeded;
+        upkeepNeeded = llmUpdateNeeded;
+        // upkeepNeeded = priceUpdateNeeded || llmUpdateNeeded;
         performData = abi.encode(priceUpdateNeeded, llmUpdateNeeded);
     }
 
@@ -65,10 +86,10 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     function performUpkeep(bytes calldata performData) external {
         (bool priceUpdateNeeded, bool llmUpdateNeeded) = abi.decode(performData, (bool, bool));
 
-        if (priceUpdateNeeded) {
-            updateAssetPrices();
-            lastPriceUpdateTime = block.timestamp;
-        }
+        // if (priceUpdateNeeded) {
+        //     updateAssetPrices();
+        //     lastPriceUpdateTime = block.timestamp;
+        // }
 
         if (llmUpdateNeeded) {
             updatePositions();
@@ -95,6 +116,21 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
             assetPrices[asset] = adjustedPrice;
             prices[i] = adjustedPrice;
             assets[i] = asset;
+        }
+
+        // Emit the AssetPricesUpdated event with the updated assets and prices
+        emit AssetPricesUpdated(assets, prices);
+
+        updatePnL();
+    }
+
+    function updateAssetPricesManual(string[] memory assets, uint256[] memory prices) public onlyOwner {
+        require(assets.length == prices.length, "Assets and prices arrays must have the same length");
+
+        for (uint256 i = 0; i < assets.length; i++) {
+            string memory asset = assets[i];
+            uint256 price = prices[i];
+            assetPrices[asset] = price;
         }
 
         // Emit the AssetPricesUpdated event with the updated assets and prices
@@ -222,7 +258,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
 
         // Initialize the system message with a standard prompt to instruct the LLM
         string memory systemPrompt = "You are an AI agent tasked with optimizing asset positions for a financial portfolio. ";
-        systemPrompt = string(abi.encodePacked(systemPrompt, "For your agent, provide the new positions for each asset in the format: {'BTC': <position>, 'ETH': <position>} and so on."));
+        systemPrompt = string(abi.encodePacked(systemPrompt, "For your agent, provide the new positions for each asset in the format: {'BTC/USD': <position>, 'ETH/USD': <position>} and so on."));
 
         IOracle.Message memory systemMessage = createTextMessage("system", systemPrompt);
         run.messages.push(systemMessage);
