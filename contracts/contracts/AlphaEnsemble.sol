@@ -158,7 +158,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     /**
      * @notice Update the positions of the agents based on the latest asset price
      */
-    function updatePositions() internal {
+    function updatePositions() public onlyOwner {
         for (uint256 i = 0; i < agents.length; i++) {
             // Generate the query and start new runs for each agent
             string memory query = generateLLMQuery(i);
@@ -200,7 +200,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      * @return assets Array of asset tickers
      * @return positions Array of positions for each asset
      */
-    function getPositions(uint agentId) external view returns (string[] memory assets, int256[] memory positions) {
+    function getPositions(uint agentId) public view returns (string[] memory assets, int256[] memory positions) {
         require(agentId < agents.length, "Invalid agent ID");
 
         assets = assetKeys;
@@ -267,10 +267,13 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         IOracle.Message memory userMessage = createTextMessage("user", query);
         run.messages.push(userMessage);
 
-        // Trigger an LLM call via the oracle
-        IOracle(oracleAddress).createOpenAiLlmCall(agentRunCount, getDefaultOpenAiConfig());
+        uint currentRunId = agentRunCount;
+        agentRunCount++;
 
-        return agentRunCount++;
+        // Trigger an LLM call via the oracle
+        IOracle(oracleAddress).createOpenAiLlmCall(currentRunId, getDefaultOpenAiConfig());
+
+        return currentRunId;
     }
 
     function handleLlmResponse(uint agentRunId) public {

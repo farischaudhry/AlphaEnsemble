@@ -12,7 +12,7 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../frontend/.en
 sepolia_rpc_url = "https://rpc.ankr.com/eth_sepolia"
 sepolia_web3 = Web3(Web3.HTTPProvider(sepolia_rpc_url))
 
-# Initialize a Web3 instance for Galadriel testnet (to write prices)
+# Initialize a Web3 instance for Galadriel testnet (to interact with AlphaEnsembleContract)
 galadriel_rpc_url = "https://devnet.galadriel.com/"
 galadriel_web3 = Web3(Web3.HTTPProvider(galadriel_rpc_url))
 
@@ -33,7 +33,7 @@ aggregator_v3_interface_abi = [
     }
 ]
 
-# Mapping of asset names to their respective contract addresses on Sepolia
+# Mapping of asset names to their respective contract addresses on Sepolia Chainlink price feeds
 price_feeds = {
     "AUD/USD": "0xB0C712f98daE15264c8E26132BCC91C40aD4d5F9",
     "BTC/USD": "0x1b44F3514812d835EB1BDB0acB33d3fA3351Ee43",
@@ -58,10 +58,9 @@ price_feeds = {
 }
 
 # Load the ABI for AlphaEnsembleContract from the JSON file
-with open(os.path.join(os.path.dirname(__file__), "AlphaEnsembleABI.json")) as f:
+with open(os.path.join(os.path.dirname(__file__), "../frontend/contracts/AlphaEnsembleABI.json")) as f:
     alpha_ensemble_abi = f.read()
 
-# AlphaEnsembleContract address (replace with actual address on Galadriel)
 alpha_ensemble_address = os.getenv('NEXT_PUBLIC_ALPHA_ENSEMBLE_ADDRESS')
 
 # Create the contract instance for AlphaEnsembleContract on Galadriel
@@ -70,6 +69,12 @@ alpha_ensemble_contract = galadriel_web3.eth.contract(address=alpha_ensemble_add
 private_key = os.getenv('NEXT_PUBLIC_PRIVATE_KEY_GALADRIEL')
 account = galadriel_web3.eth.account.from_key(private_key)
 chain_id = 696969  # Galadriel testnet chain ID
+
+# Upkeep intervals
+price_update_interval = 15  # seconds
+llm_update_interval = 60 * 5  # 5 minutes
+last_price_update_time = time.time()
+last_llm_update_time = time.time()
 
 def fetch_latest_prices():
     assets = []
@@ -96,11 +101,11 @@ def fetch_latest_prices():
 
     return assets, prices
 
-def update_alpha_ensemble_contract(assets, prices):
+def update_alpha_ensemble_asset_prices(assets, prices):
     try:
         txn = alpha_ensemble_contract.functions.updateAssetPricesManual(assets, prices).build_transaction({
             'chainId': chain_id,
-            'gas': 600000,  # Adjust gas limit if necessary
+            'gas': 1000000,
             'gasPrice': galadriel_web3.eth.gas_price,
             'nonce': galadriel_web3.eth.get_transaction_count(account.address),
         })
@@ -112,13 +117,49 @@ def update_alpha_ensemble_contract(assets, prices):
     except Exception as e:
         print(f"Failed to update prices in AlphaEnsembleContract on Galadriel: {e}")
 
+def update_alpha_ensemble_llm_positions():
+    try:
+        txn = alpha_ensemble_contract.functions.updatePositions().build_transaction({
+            'chainId': chain_id,
+            'gas': 15000000,
+            'gasPrice': galadriel_web3.eth.gas_price,
+            'nonce': galadriel_web3.eth.get_transaction_count(account.address),
+        })
+
+        signed_txn = galadriel_web3.eth.account.sign_transaction(txn, private_key=private_key)
+        tx_hash = galadriel_web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        receipt = galadriel_web3.eth.wait_for_transaction_receipt(tx_hash)
+        print(f"Updated LLM positions on AlphaEnsembleContract with Tx: {tx_hash.hex()}, Status: {receipt['status']}")
+        print(f"Gas used: {receipt['gasUsed']}")
+    except Exception as e:
+        print(f"Failed to update LLM positions in AlphaEnsembleContract on Galadriel: {e}")
+
+def check_upkeep():
+    current_time = time.time()
+    price_update_needed = (current_time - last_price_update_time) > price_update_interval
+    llm_update_needed = (current_time - last_llm_update_time) > llm_update_interval
+    return price_update_needed, llm_update_needed
+
 if __name__ == "__main__":
     while True:
-        # Fetch the latest prices for all assets from Sepolia
-        assets, prices = fetch_latest_prices()
+        # Check if upkeep is needed
+        price_update_needed, llm_update_needed = check_upkeep()
 
-        # Update the AlphaEnsembleContract on Galadriel with the latest prices
-        update_alpha_ensemble_contract(assets, prices)
+        if price_update_needed:
+            # Fetch the latest prices for all assets from Sepolia
+            assets, prices = fetch_latest_prices()
 
-        # Wait for 30 seconds before repeating
-        time.sleep(30)
+            # Update the AlphaEnsembleContract on Galadriel with the latest prices
+            update_alpha_ensemble_asset_prices(assets, prices)
+
+        #     # Update the last price update time
+        #     last_price_update_time = time.time()
+
+        if llm_update_needed:
+            # Start LLM process to update positions
+            update_alpha_ensemble_llm_positions()
+
+            last_llm_update_time = time.time()
+
+        # Wait for a short period before checking again
+        time.sleep(5)
