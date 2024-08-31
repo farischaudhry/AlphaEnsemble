@@ -152,8 +152,8 @@ if __name__ == "__main__":
             # Update the AlphaEnsembleContract on Galadriel with the latest prices
             update_alpha_ensemble_asset_prices(assets, prices)
 
-        #     # Update the last price update time
-        #     last_price_update_time = time.time()
+            # Update the last price update time
+            last_price_update_time = time.time()
 
         if llm_update_needed:
             # Start LLM process to update positions
