@@ -316,11 +316,8 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             require(pair.length == 2, "Invalid key-value pair format in LLM response");
 
             // Extract asset ticker and position value
-            string memory asset = stripQuotes(pair[0]);
-            string memory positionStr = stripQuotes(pair[1]);
-
-            // Remove any leading or trailing whitespace from the position string
-            positionStr = trimWhitespace(positionStr);
+            string memory asset = stripQuotes(trimWhitespace(pair[0]));
+            string memory positionStr = stripQuotes(trimWhitespace(pair[1]));
 
             // Parse the position value
             int256 position = parseInt(positionStr);
