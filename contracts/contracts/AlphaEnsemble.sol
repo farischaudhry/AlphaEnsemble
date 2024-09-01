@@ -26,11 +26,6 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     mapping(uint => AgentRun) public agentRuns;
     uint public agentRunCount; // Counter for the number of agent runs
 
-    uint256 public priceUpdateInterval = 10 seconds;
-    uint256 public llmUpdateInterval = 5 minutes;
-    uint256 public lastPriceUpdateTime;
-    uint256 public lastLlmUpdateTime;
-
     // Events
     event AssetPricesUpdated(string[] assets, uint256[] prices);
     event PositionsUpdated(uint indexed agentID, string[] assets, int256[] positions);
@@ -72,30 +67,6 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         lastLlmUpdateTime = block.timestamp;
     }
 
-    // Check if the upkeep is needed (either for price update or LLM update)
-    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
-        bool priceUpdateNeeded = (block.timestamp - lastPriceUpdateTime) > priceUpdateInterval;
-        bool llmUpdateNeeded = (block.timestamp - lastLlmUpdateTime) > llmUpdateInterval;
-
-        upkeepNeeded = llmUpdateNeeded;
-        // upkeepNeeded = priceUpdateNeeded || llmUpdateNeeded;
-        performData = abi.encode(priceUpdateNeeded, llmUpdateNeeded);
-    }
-
-    // Perform the upkeep (to be called by Chainlink Keepers or manually)
-    function performUpkeep(bytes calldata performData) external {
-        (bool priceUpdateNeeded, bool llmUpdateNeeded) = abi.decode(performData, (bool, bool));
-
-        // if (priceUpdateNeeded) {
-        //     updateAssetPrices();
-        //     lastPriceUpdateTime = block.timestamp;
-        // }
-
-        if (llmUpdateNeeded) {
-            updatePositions();
-            lastLlmUpdateTime = block.timestamp;
-        }
-    }
 
     function updateAssetPrices() public {
         string[] memory assets = new string[](assetKeys.length);
@@ -276,21 +247,39 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         return currentRunId;
     }
 
-    function handleLlmResponse(uint agentRunId) public {
-        // Fetch the AgentRun data using the provided agentRunId
+    /**
+     * @notice Callback function that handles the response from the LLM (OpenAI in this case)
+     * @param agentRunId The ID of the agent run that the response corresponds to
+     * @param response The response received from the LLM
+     * @param errorMessage Any error message returned by the oracle (empty if no error)
+     */
+    function onOracleOpenAiLlmResponse(
+        uint agentRunId,
+        IOracle.OpenAiResponse memory response,
+        string memory errorMessage
+    ) public {
+        require(msg.sender == oracleAddress, "Only the oracle can call this function");
+
         AgentRun storage run = agentRuns[agentRunId];
 
-        // Emit the AgentRunCompleted event before processing the response
-        emit AgentRunCompleted(agentRunId, run.agentId, run.messages[run.responsesCount - 1].content[0].value);
+        if (bytes(errorMessage).length > 0) {
+            // Handle error if necessary, e.g., logging or reverting
+            run.is_finished = true;
+            return;
+        }
 
-        // Process the LLM response
-        string memory llmResponse = run.messages[run.responsesCount - 1].content[0].value;
+        if (bytes(response.content).length > 0) {
+            run.messages.push(createTextMessage("assistant", response.content));
+            run.responsesCount++;
+        }
 
         // Update the agent's positions based on the LLM response
-        updateAgentPositionsFromLLMResponse(agentRunId, llmResponse);
+        updateAgentPositionsFromLLMResponse(agentRunId, response.content);
 
         // Mark the agentRun as finished
         run.is_finished = true;
+
+        emit AgentRunCompleted(agentRunId, run.agentId, response.content);
     }
 
     function updateAgentPositionsFromLLMResponse(uint agentRunId, string memory llmResponse) internal {
@@ -598,5 +587,40 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             i /= 10;
         }
         return string(bstr);
+    }
+
+    // ====================================================================================================
+    // Keeper functions
+    // ====================================================================================================
+    uint256 public priceUpdateInterval = 10 seconds;
+    uint256 public llmUpdateInterval = 5 minutes;
+    uint256 public lastPriceUpdateTime;
+    uint256 public lastLlmUpdateTime;
+
+    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) {
+        bool priceUpdateNeeded = (block.timestamp - lastPriceUpdateTime) > priceUpdateInterval;
+        bool llmUpdateNeeded = (block.timestamp - lastLlmUpdateTime) > llmUpdateInterval;
+
+        upkeepNeeded = llmUpdateNeeded;
+        // upkeepNeeded = priceUpdateNeeded || llmUpdateNeeded;
+        performData = abi.encode(priceUpdateNeeded, llmUpdateNeeded);
+    }
+
+    /**
+     * @notice Perform the upkeep
+     * @param performData Data passed by the Keeper-compatible system
+     */
+    function performUpkeep(bytes calldata performData) external {
+        (bool priceUpdateNeeded, bool llmUpdateNeeded) = abi.decode(performData, (bool, bool));
+
+        if (priceUpdateNeeded) {
+            updateAssetPrices();
+            lastPriceUpdateTime = block.timestamp;
+        }
+
+        if (llmUpdateNeeded) {
+            updatePositions();
+            lastLlmUpdateTime = block.timestamp;
+        }
     }
 }
