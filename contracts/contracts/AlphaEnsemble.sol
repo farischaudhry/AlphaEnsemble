@@ -163,7 +163,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         uint agentRunId,
         IOracle.OpenAiResponse memory response,
         string memory errorMessage
-    ) public {
+    ) public onlyOracle {
         emit OracleResponseCallback(agentRunId, response.content, errorMessage);
 
         AgentRun storage run = agentRuns[agentRunId];
@@ -633,5 +633,9 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     modifier onlyOracle() {
         require(msg.sender == oracleAddress, "Only the oracle can call this function");
         _;
+    }
+
+    function setOracleAddress(address _oracleAddress) public onlyOwner {
+        oracleAddress = _oracleAddress;
     }
 }
