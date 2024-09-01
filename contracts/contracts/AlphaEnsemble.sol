@@ -257,7 +257,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         run.max_iterations = max_iterations;
 
         // Initialize the system message with a standard prompt to instruct the LLM
-        string memory systemPrompt = "You are an AI agent tasked with optimizing asset positions for a financial portfolio. ";
+        string memory systemPrompt = "You are an AI agent tasked with optimizing asset positions for a financial portfolio. The max position you may take is 10 and you can use fractional positions.";
         systemPrompt = string(abi.encodePacked(systemPrompt, "For your agent, provide the new positions for each asset in the format: {'BTC/USD': <position>, 'ETH/USD': <position>} and so on."));
 
         IOracle.Message memory systemMessage = createTextMessage("system", systemPrompt);
