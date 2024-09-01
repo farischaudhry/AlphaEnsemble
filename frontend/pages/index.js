@@ -7,11 +7,16 @@ import DynamicGraph from '../components/DynamicGraph';
 import Head from 'next/head';
 
 export default function Home() {
-  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [selectedAgents, setSelectedAgents] = useState([]);
 
   const handleAgentSelection = (agentId) => {
-    setSelectedAgent(agentId);
+    setSelectedAgents((prevSelected) =>
+      prevSelected.includes(agentId)
+        ? prevSelected.filter((id) => id !== agentId) // Remove if already selected
+        : [...prevSelected, agentId] // Add if not selected
+    );
   };
+
 
   return (
     <div className="app">
@@ -32,7 +37,7 @@ export default function Home() {
           <InstrumentOverview />
         </div>
         <div className="grid-item">
-          <DynamicGraph agentId={'team-001'} />
+          <DynamicGraph selectedAgents={['agent-001', 'agent-002']} />
         </div>
       </div>
       <Footer />

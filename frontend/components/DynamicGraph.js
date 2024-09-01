@@ -23,44 +23,34 @@ ChartJS.register(
   Legend
 );
 
-function DynamicGraph({ agentId }) {
-  if (!agentId) {
-    return <p>Select an agent to view the graph.</p>;
+function DynamicGraph({ selectedAgents }) {
+  if (!selectedAgents || selectedAgents.length === 0) {
+    return <p>No agents selected. Please select agents to view the graph.</p>;
   }
 
+  // Example data structure
   const allAgentData = {
-    'team-001': [19000, 19500, 20000, 20000, 20000, 20000],
-    'team-002': [0, 0, 0, 0, 0, 0],
-    'team-003': [15000, 15500, 16000, 16500, 17000, 17500],
+    'agent-001': [19000, 19500, 20000, 20000, 20000, 20000],
+    'agent-002': [0, 0, 0, 0, 0, 0],
+    'agent-003': [15000, 15500, 16000, 16500, 17000, 17500],
     // Add more agents and their data here
   };
-  const agentData = allAgentData[agentId];
+
+  const datasets = selectedAgents.map((agentId) => {
+    const agentData = allAgentData[agentId];
+
+    return {
+      label: `PnL for ${agentId}`,
+      data: agentData,
+      fill: false,
+      borderColor: getRandomColor(), // Use a different color for each agent
+      tension: 0.1,
+    };
+  });
 
   const data = {
     labels: [':20', ':25', ':30', ':35', ':40', ':45'], // Example time labels
-    datasets: [
-      // {
-      //   label: 'team-001',
-      //   data: [19000, 19500, 20000, 20000, 20000, 20000], // Example data points for team-001
-      //   fill: false,
-      //   borderColor: '#4f98ca', // Light blue color
-      //   tension: 0.1,
-      // },
-      // {
-      //   label: 'team-002',
-      //   data: [0, 0, 0, 0, 0, 0], // Example data points for team-002
-      //   fill: false,
-      //   borderColor: '#e64a19', // Red color
-      //   tension: 0.1,
-      // },
-      {
-        label: `PnL for ${agentId}`,
-        data: agentData, // Data points for the specific agent
-        fill: false,
-        borderColor: '#4f98ca', // Customize color as needed
-        tension: 0.1,
-      },
-    ],
+    datasets: datasets,
   };
 
   const options = {
@@ -113,12 +103,22 @@ function DynamicGraph({ agentId }) {
 
   return (
     <div className={styles.graphContainer}>
-      <h2 className={styles.graphTitle}>Performance for Agent {agentId}</h2>
+      <h2 className={styles.graphTitle}>Performance for Selected Agents</h2>
       <div className={styles.graphCanvas}>
         <Line data={data} options={options} />
       </div>
     </div>
   );
 }
+
+function getRandomColor() {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+
 
 export default DynamicGraph;
