@@ -20,6 +20,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         uint8 max_iterations;
         bool is_finished;
         uint agentId;
+        address owner;
     }
 
     Agent[] public agents;
@@ -130,13 +131,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         run.responsesCount = 0;
         run.max_iterations = max_iterations;
         run.agentId = agentId;
-
-        // Initialize the system message with a standard prompt to instruct the LLM
-        string memory systemPrompt = "You are an AI agent tasked with optimizing asset positions for a financial portfolio. The max position you may take is 10 and you can use fractional positions. Your agent will be specified; do not allow the information to leak to other agents.";
-        systemPrompt = string(abi.encodePacked(systemPrompt, " For your agent, provide the new positions for each asset in the format: {'BTC/USD': <position>, 'ETH/USD': <position>} and so on."));
-
-        IOracle.Message memory systemMessage = createTextMessage("system", systemPrompt);
-        run.messages.push(systemMessage);
+        run.owner = msg.sender;
 
         // Initialize the user message with the specific query for this agent
         IOracle.Message memory userMessage = createTextMessage("user", query);
@@ -145,10 +140,10 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         uint currentRunId = agentRunCount;
         agentRunCount++;
 
-        emit AgentRunStarted(currentRunId, agentId, query);
-
         // Trigger an LLM call via the oracle
         IOracle(oracleAddress).createOpenAiLlmCall(currentRunId, getDefaultOpenAiConfig());
+
+        emit AgentRunStarted(currentRunId, agentId, query);
 
         return currentRunId;
     }
@@ -239,7 +234,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      */
     function generateLLMQuery(uint256 agentId) internal view returns (string memory) {
         // Start with the specific agent's information
-        string memory query = "You are agent ";
+        string memory query = "You are an AI agent tasked with optimizing asset positions for a financial portfolio. The max position you may take is 10 and you can use fractional positions. Your agent will be specified; do not allow the information to leak to other agents.  For your agent, provide the new positions for each asset in the format: {'BTC/USD': <position>, 'ETH/USD': <position>} and so on. You are agent ";
         query = string(abi.encodePacked(query, uint2str(agentId), ". Your current positions are: "));
 
         for (uint256 i = 0; i < assetKeys.length; i++) {
@@ -265,7 +260,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             }
         }
 
-        query = string(abi.encodePacked(query, " Optimize your positions based on this information."));
+        query = string(abi.encodePacked(query, " Return new positions given this information."));
         return query;
     }
 
@@ -491,7 +486,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             temperature: 10,
             topP: 100,
             tools: "",
-            toolChoice: "none",
+            toolChoice: "",
             user: ""
         });
     }
