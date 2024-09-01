@@ -43,7 +43,7 @@ function DynamicGraph({ selectedAgents }) {
       label: `PnL for ${agentId}`,
       data: agentData,
       fill: false,
-      borderColor: getRandomColor(), // Use a different color for each agent
+      borderColor: getColor(), // Use a different color for each agent
       tension: 0.1,
     };
   });
@@ -109,6 +109,27 @@ function DynamicGraph({ selectedAgents }) {
       </div>
     </div>
   );
+}
+
+function getColor(index) {
+  const predefinedColors = [
+    '#4f98ca', // Light blue color
+    '#e64a19', // Red color
+    '#FF33A1', 
+    '#A133FF', 
+    '#FF5733', 
+    '#33FFA1', 
+    '#FF8C33', 
+    '#33A1FF' 
+  ];
+
+  // If index is within the range of predefined colors, return the predefined color
+  if (index < predefinedColors.length) {
+    return predefinedColors[index];
+  }
+
+  // Otherwise, generate a random color
+  return getRandomColor();
 }
 
 function getRandomColor() {
