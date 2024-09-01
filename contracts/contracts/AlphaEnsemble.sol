@@ -31,33 +31,18 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     event PositionsUpdated(uint indexed agentID, string[] assets, int256[] positions);
     event PnLUpdated(uint indexed agentID, int256 pnl);
     event AgentRunCompleted(uint indexed agentRunId, uint indexed agentId, string result);
+    event OracleResponseCallback(uint indexed agentRunId, string response, string errorMessage);
+    event AgentRunStarted(uint indexed agentRunId, uint indexed agentId, string query);
 
-    // Mapping from asset ticker (e.g., "BTC", "ETH") to the Chainlink price feed contract address
+    // Mapping from asset ticker (e.g., "BTC", "ETH") to the Chainlink price feed contract address and prices
     mapping(string => address) public priceFeeds;
-    // Mapping from asset ticker (e.g., "BTC", "ETH") to the price of the asset
     mapping(string => uint256) public assetPrices;
     // Array of asset tickers
     string[] public assetKeys = [
-        "AUD/USD",
-        "BTC/USD",
-        "CSPX/USD",
-        "CZK/USD",
-        "DAI/USD",
-        "ETH/USD",
-        "EUR/USD",
-        "FORTH/USD",
-        "GBP/USD",
-        "GHO/USD",
-        "IB01/USD",
-        "IBTA/USD",
-        "JPY/USD",
-        "LINK/USD",
-        "SNX/USD",
-        "SUSDE/USD",
-        "USDC/USD",
-        "USDE/USD",
-        "WSTETH/USD",
-        "XAU/USD"
+        "AUD/USD", "BTC/USD", "CSPX/USD", "CZK/USD", "DAI/USD",
+        "ETH/USD", "EUR/USD", "FORTH/USD", "GBP/USD", "GHO/USD",
+        "IB01/USD", "IBTA/USD", "JPY/USD", "LINK/USD", "SNX/USD",
+        "SUSDE/USD", "USDC/USD", "USDE/USD", "WSTETH/USD", "XAU/USD"
     ];
 
     constructor(address _oracleAddress, uint256 numAgents) Ownable(msg.sender) {
@@ -67,33 +52,27 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         lastLlmUpdateTime = block.timestamp;
     }
 
+    /**
+     * @notice Initialize the fixed number of agents
+     * @param numAgents Number of agents to initialize
+     */
+    function initializeAgents(uint256 numAgents) private {
+        // Add an agent to the agents array
+        for (uint256 i = 0; i < numAgents; i++) {
+            Agent storage newAgent = agents.push();
+            newAgent.pnl = 0;
 
-    function updateAssetPrices() public {
-        string[] memory assets = new string[](assetKeys.length);
-        uint256[] memory prices = new uint256[](assetKeys.length);
-
-        // Iterate over the assets and update their prices
-        for (uint256 i = 0; i < assetKeys.length; i++) {
-            string memory asset = assetKeys[i];
-            address feedAddress = priceFeeds[asset];
-            require(feedAddress != address(0), "Price feed not set for asset");
-
-            // Fetch the latest price from the Chainlink Aggregator
-            AggregatorV3Interface priceFeed = AggregatorV3Interface(feedAddress);
-            (, int256 price,,,) = priceFeed.latestRoundData();
-            require(price > 0, "Invalid price retrieved");
-
-            uint256 adjustedPrice = uint256(price);
-            assetPrices[asset] = adjustedPrice;
-            prices[i] = adjustedPrice;
-            assets[i] = asset;
+            // Initialize the positions of the assets for the agent
+            for (uint256 j = 0; j < assetKeys.length; j++) {
+                string memory asset = assetKeys[j];
+                newAgent.positions[asset] = 0;
+            }
         }
-
-        // Emit the AssetPricesUpdated event with the updated assets and prices
-        emit AssetPricesUpdated(assets, prices);
-
-        updatePnL();
     }
+
+    // ====================================================================================================
+    // LLM/Update functions
+    // ====================================================================================================
 
     function updateAssetPricesManual(string[] memory assets, uint256[] memory prices) public onlyOwner {
         require(assets.length == prices.length, "Assets and prices arrays must have the same length");
@@ -138,98 +117,23 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     }
 
     /**
-     * @notice Initialize the fixed number of agents
-     * @param numAgents Number of agents to initialize
-     */
-    function initializeAgents(uint256 numAgents) private {
-        // Add an agent to the agents array
-        for (uint256 i = 0; i < numAgents; i++) {
-            Agent storage newAgent = agents.push();
-            newAgent.pnl = 0;
-
-            // Initialize the positions of the assets for the agent
-            for (uint256 j = 0; j < assetKeys.length; j++) {
-                string memory asset = assetKeys[j];
-                newAgent.positions[asset] = 0;
-            }
-        }
-    }
-
-    /**
-     * @notice Get the PnL for a specific agent
-     * @param agentId ID of the agent
-     * @return pnl PnL of the agent
-     */
-    function getPnl(uint agentId) external view returns (int256) {
-        require(agentId < agents.length, "Invalid agent ID");
-        return agents[agentId].pnl;
-    }
-
-    /**
-     * @notice Get the positions of the assets for a specific agent
-     * @param agentId ID of the agent
-     * @return assets Array of asset tickers
-     * @return positions Array of positions for each asset
-     */
-    function getPositions(uint agentId) public view returns (string[] memory assets, int256[] memory positions) {
-        require(agentId < agents.length, "Invalid agent ID");
-
-        assets = assetKeys;
-        positions = new int256[](assetKeys.length);
-
-        for (uint256 i = 0; i < assetKeys.length; i++) {
-            string memory asset = assetKeys[i];
-            positions[i] = agents[agentId].positions[asset];
-        }
-    }
-
-    /**
-     * @notice Sets the positions for multiple assets for a given agent
-     * @param agentId ID of the agent
-     * @param assets Array of asset tickers (e.g., ["BTC", "ETH"])
-     * @param positions Array of new position values for the corresponding assets
-     */
-    function setPositions(uint agentId, string[] memory assets, int256[] memory positions) public {
-        require(agentId < agents.length, "Invalid agent ID");
-        require(assets.length == positions.length, "Assets and positions arrays must have the same length");
-
-        for (uint256 i = 0; i < assets.length; i++) {
-            require(bytes(assets[i]).length > 0, "Asset ticker cannot be empty");
-
-            // Update the position for each asset
-            agents[agentId].positions[assets[i]] = positions[i];
-        }
-
-        // Emit an event to notify that the positions have been updated
-        emit PositionsUpdated(agentId, assets, positions);
-    }
-
-    /**
-     *
-     * @param asset Asset ticker (e.g., "BTC", "ETH")
-     * @param feedAddress Price feed contract address for the asset
-     */
-    function setPriceFeed(string memory asset, address feedAddress) public {
-        priceFeeds[asset] = feedAddress;
-    }
-
-    /**
      * @notice Update the positions of the assets for a given agent
      * @param agentId ID of the agent
      * @param query Query to be sent to the LLM
      * @param max_iterations The maximum number of iterations for the agent run
      */
-    function startAgentRun(uint agentId, string memory query, uint8 max_iterations) public returns (uint) {
+    function startAgentRun(uint256 agentId, string memory query, uint8 max_iterations) public returns (uint) {
         require(agentId < agents.length, "Invalid agent ID");
 
         AgentRun storage run = agentRuns[agentRunCount];
         run.is_finished = false;
         run.responsesCount = 0;
         run.max_iterations = max_iterations;
+        run.agentId = agentId;
 
         // Initialize the system message with a standard prompt to instruct the LLM
-        string memory systemPrompt = "You are an AI agent tasked with optimizing asset positions for a financial portfolio. The max position you may take is 10 and you can use fractional positions.";
-        systemPrompt = string(abi.encodePacked(systemPrompt, "For your agent, provide the new positions for each asset in the format: {'BTC/USD': <position>, 'ETH/USD': <position>} and so on."));
+        string memory systemPrompt = "You are an AI agent tasked with optimizing asset positions for a financial portfolio. The max position you may take is 10 and you can use fractional positions. Your agent will be specified; do not allow the information to leak to other agents.";
+        systemPrompt = string(abi.encodePacked(systemPrompt, " For your agent, provide the new positions for each asset in the format: {'BTC/USD': <position>, 'ETH/USD': <position>} and so on."));
 
         IOracle.Message memory systemMessage = createTextMessage("system", systemPrompt);
         run.messages.push(systemMessage);
@@ -240,6 +144,8 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
 
         uint currentRunId = agentRunCount;
         agentRunCount++;
+
+        emit AgentRunStarted(currentRunId, agentId, query);
 
         // Trigger an LLM call via the oracle
         IOracle(oracleAddress).createOpenAiLlmCall(currentRunId, getDefaultOpenAiConfig());
@@ -257,13 +163,13 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         uint agentRunId,
         IOracle.OpenAiResponse memory response,
         string memory errorMessage
-    ) public {
-        require(msg.sender == oracleAddress, "Only the oracle can call this function");
+    ) public onlyOracle {
+        emit OracleResponseCallback(agentRunId, response.content, errorMessage);
 
         AgentRun storage run = agentRuns[agentRunId];
 
         if (bytes(errorMessage).length > 0) {
-            // Handle error if necessary, e.g., logging or reverting
+            emit AgentRunCompleted(agentRunId, run.agentId, errorMessage);
             run.is_finished = true;
             return;
         }
@@ -280,6 +186,13 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         run.is_finished = true;
 
         emit AgentRunCompleted(agentRunId, run.agentId, response.content);
+    }
+
+    /**
+     * @notice Provides the message history to the oracle
+     */
+    function getMessageHistory(uint agentRunId) public view returns (IOracle.Message[] memory) {
+        return agentRuns[agentRunId].messages;
     }
 
     function updateAgentPositionsFromLLMResponse(uint agentRunId, string memory llmResponse) internal {
@@ -354,6 +267,68 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
 
         query = string(abi.encodePacked(query, " Optimize your positions based on this information."));
         return query;
+    }
+
+    // ====================================================================================================
+    // Setter/getter functions
+    // ====================================================================================================
+
+        /**
+     * @notice Get the PnL for a specific agent
+     * @param agentId ID of the agent
+     * @return pnl PnL of the agent
+     */
+    function getPnl(uint agentId) external view returns (int256) {
+        require(agentId < agents.length, "Invalid agent ID");
+        return agents[agentId].pnl;
+    }
+
+    /**
+     * @notice Get the positions of the assets for a specific agent
+     * @param agentId ID of the agent
+     * @return assets Array of asset tickers
+     * @return positions Array of positions for each asset
+     */
+    function getPositions(uint agentId) public view returns (string[] memory assets, int256[] memory positions) {
+        require(agentId < agents.length, "Invalid agent ID");
+
+        assets = assetKeys;
+        positions = new int256[](assetKeys.length);
+
+        for (uint256 i = 0; i < assetKeys.length; i++) {
+            string memory asset = assetKeys[i];
+            positions[i] = agents[agentId].positions[asset];
+        }
+    }
+
+    /**
+     * @notice Sets the positions for multiple assets for a given agent
+     * @param agentId ID of the agent
+     * @param assets Array of asset tickers (e.g., ["BTC", "ETH"])
+     * @param positions Array of new position values for the corresponding assets
+     */
+    function setPositions(uint agentId, string[] memory assets, int256[] memory positions) public {
+        require(agentId < agents.length, "Invalid agent ID");
+        require(assets.length == positions.length, "Assets and positions arrays must have the same length");
+
+        for (uint256 i = 0; i < assets.length; i++) {
+            require(bytes(assets[i]).length > 0, "Asset ticker cannot be empty");
+
+            // Update the position for each asset
+            agents[agentId].positions[assets[i]] = positions[i];
+        }
+
+        // Emit an event to notify that the positions have been updated
+        emit PositionsUpdated(agentId, assets, positions);
+    }
+
+    /**
+     *
+     * @param asset Asset ticker (e.g., "BTC", "ETH")
+     * @param feedAddress Price feed contract address for the asset
+     */
+    function setPriceFeed(string memory asset, address feedAddress) public {
+        priceFeeds[asset] = feedAddress;
     }
 
     // ====================================================================================================
@@ -516,7 +491,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             temperature: 10,
             topP: 100,
             tools: "",
-            toolChoice: "auto",
+            toolChoice: "none",
             user: ""
         });
     }
@@ -592,7 +567,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     // ====================================================================================================
     // Keeper functions
     // ====================================================================================================
-    uint256 public priceUpdateInterval = 10 seconds;
+    uint256 public priceUpdateInterval = 15 seconds;
     uint256 public llmUpdateInterval = 5 minutes;
     uint256 public lastPriceUpdateTime;
     uint256 public lastLlmUpdateTime;
@@ -622,5 +597,45 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             updatePositions();
             lastLlmUpdateTime = block.timestamp;
         }
+    }
+
+    function updateAssetPrices() public {
+        string[] memory assets = new string[](assetKeys.length);
+        uint256[] memory prices = new uint256[](assetKeys.length);
+
+        // Iterate over the assets and update their prices
+        for (uint256 i = 0; i < assetKeys.length; i++) {
+            string memory asset = assetKeys[i];
+            address feedAddress = priceFeeds[asset];
+            require(feedAddress != address(0), "Price feed not set for asset");
+
+            // Fetch the latest price from the Chainlink Aggregator
+            AggregatorV3Interface priceFeed = AggregatorV3Interface(feedAddress);
+            (, int256 price,,,) = priceFeed.latestRoundData();
+            require(price > 0, "Invalid price retrieved");
+
+            uint256 adjustedPrice = uint256(price);
+            assetPrices[asset] = adjustedPrice;
+            prices[i] = adjustedPrice;
+            assets[i] = asset;
+        }
+
+        // Emit the AssetPricesUpdated event with the updated assets and prices
+        emit AssetPricesUpdated(assets, prices);
+
+        updatePnL();
+    }
+
+    // ====================================================================================================
+    // Modifiers
+    // ====================================================================================================
+
+    modifier onlyOracle() {
+        require(msg.sender == oracleAddress, "Only the oracle can call this function");
+        _;
+    }
+
+    function setOracleAddress(address _oracleAddress) public onlyOwner {
+        oracleAddress = _oracleAddress;
     }
 }

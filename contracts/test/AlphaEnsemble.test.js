@@ -81,4 +81,13 @@ describe("AlphaEnsemble Contract", function () {
     //     // Check the return value
     //     expect(result).to.equal("test");
     // });
+
+    // it("Should emit AgentRunStarted on startAgentRun", async function () {
+    //     const agentId = 0;
+    //     const query = "test";
+
+    //     await expect(alphaEnsemble.startAgentRun(agentId, query, 1))
+    //         .to.emit(alphaEnsemble, "AgentRunStarted")
+    //         .withArgs(0, agentId, query);
+    // });
 });
