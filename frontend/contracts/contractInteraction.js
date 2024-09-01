@@ -75,8 +75,8 @@ export async function pollEvents(updateInstrumentOverview, updateLeaderboard) {
   // Poll for AgentRunStarted events
   const agentRunStartedEvents = await contract.queryFilter("AgentRunStarted", lastCheckedBlock, latestBlock);
   agentRunStartedEvents.forEach((event) => {
-      const { agentRunId, agentID, query } = event.args;
-      console.log(`Agent run started for agentRunId: ${agentRunId}, agentID: ${agentID}, query: ${query}`);
+      const { agentRunId, agentId, query } = event.args;
+      console.log(`Agent run started for agentRunId: ${agentRunId}, agentID: ${agentId}, query: ${query}`);
   });
 
   // Update the last checked block to the latest block
