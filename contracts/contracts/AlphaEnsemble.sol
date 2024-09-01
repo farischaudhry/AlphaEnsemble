@@ -74,33 +74,6 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     // LLM/Update functions
     // ====================================================================================================
 
-    function updateAssetPrices() public {
-        string[] memory assets = new string[](assetKeys.length);
-        uint256[] memory prices = new uint256[](assetKeys.length);
-
-        // Iterate over the assets and update their prices
-        for (uint256 i = 0; i < assetKeys.length; i++) {
-            string memory asset = assetKeys[i];
-            address feedAddress = priceFeeds[asset];
-            require(feedAddress != address(0), "Price feed not set for asset");
-
-            // Fetch the latest price from the Chainlink Aggregator
-            AggregatorV3Interface priceFeed = AggregatorV3Interface(feedAddress);
-            (, int256 price,,,) = priceFeed.latestRoundData();
-            require(price > 0, "Invalid price retrieved");
-
-            uint256 adjustedPrice = uint256(price);
-            assetPrices[asset] = adjustedPrice;
-            prices[i] = adjustedPrice;
-            assets[i] = asset;
-        }
-
-        // Emit the AssetPricesUpdated event with the updated assets and prices
-        emit AssetPricesUpdated(assets, prices);
-
-        updatePnL();
-    }
-
     function updateAssetPricesManual(string[] memory assets, uint256[] memory prices) public onlyOwner {
         require(assets.length == prices.length, "Assets and prices arrays must have the same length");
 
@@ -594,7 +567,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     // ====================================================================================================
     // Keeper functions
     // ====================================================================================================
-    uint256 public priceUpdateInterval = 10 seconds;
+    uint256 public priceUpdateInterval = 15 seconds;
     uint256 public llmUpdateInterval = 5 minutes;
     uint256 public lastPriceUpdateTime;
     uint256 public lastLlmUpdateTime;
@@ -624,6 +597,33 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             updatePositions();
             lastLlmUpdateTime = block.timestamp;
         }
+    }
+
+    function updateAssetPrices() public {
+        string[] memory assets = new string[](assetKeys.length);
+        uint256[] memory prices = new uint256[](assetKeys.length);
+
+        // Iterate over the assets and update their prices
+        for (uint256 i = 0; i < assetKeys.length; i++) {
+            string memory asset = assetKeys[i];
+            address feedAddress = priceFeeds[asset];
+            require(feedAddress != address(0), "Price feed not set for asset");
+
+            // Fetch the latest price from the Chainlink Aggregator
+            AggregatorV3Interface priceFeed = AggregatorV3Interface(feedAddress);
+            (, int256 price,,,) = priceFeed.latestRoundData();
+            require(price > 0, "Invalid price retrieved");
+
+            uint256 adjustedPrice = uint256(price);
+            assetPrices[asset] = adjustedPrice;
+            prices[i] = adjustedPrice;
+            assets[i] = asset;
+        }
+
+        // Emit the AssetPricesUpdated event with the updated assets and prices
+        emit AssetPricesUpdated(assets, prices);
+
+        updatePnL();
     }
 
     // ====================================================================================================
