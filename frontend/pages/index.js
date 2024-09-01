@@ -32,7 +32,7 @@ export default function Home() {
           <InstrumentOverview />
         </div>
         <div className="grid-item">
-          <DynamicGraph agentId={selectedAgent} />
+          <DynamicGraph agentId={'team-001'} />
         </div>
       </div>
       <Footer />
