@@ -30,23 +30,35 @@ function DynamicGraph({ selectedAgents }) {
 
   // Example data structure
   const allAgentData = {
-    'agent-001': [19000, 19500, 20000, 20000, 20000, 20000],
-    'agent-002': [0, 0, 0, 0, 0, 0],
-    'agent-003': [15000, 15500, 16000, 16500, 17000, 17500],
-    // Add more agents and their data here
+    'agent-001': {
+      data: [19000, 19500, 20000, 20000, 20000, 20000],
+      color: '#FF5733', // Assign a predefined color
+    },
+    'agent-002': {
+      data: [0, 0, 0, 0, 0, 0],
+      color: '#33FF57', // Assign a predefined color
+    },
+    'agent-003': {
+      data: [15000, 15500, 16000, 16500, 17000, 17500],
+      color: '#3357FF', // Assign a predefined color
+    },
   };
+  
 
-  const datasets = selectedAgents.map((agentId) => {
-    const agentData = allAgentData[agentId];
-
+  const datasets = selectedAgents.map((agentId, index) => {
+    const agentInfo = allAgentData[agentId] || {};
+    const agentData = agentInfo.data || [];
+    const agentColor = agentInfo.color || getColor(index); // Use predefined color or get one based on index
+  
     return {
       label: `PnL for ${agentId}`,
       data: agentData,
       fill: false,
-      borderColor: getColor(), // Use a different color for each agent
+      borderColor: agentColor, // Use the assigned color for each agent
       tension: 0.1,
     };
   });
+  
 
   const data = {
     labels: [':20', ':25', ':30', ':35', ':40', ':45'], // Example time labels
@@ -113,23 +125,11 @@ function DynamicGraph({ selectedAgents }) {
 
 function getColor(index) {
   const predefinedColors = [
-    '#4f98ca', // Light blue color
-    '#e64a19', // Red color
-    '#FF33A1', 
-    '#A133FF', 
-    '#FF5733', 
-    '#33FFA1', 
-    '#FF8C33', 
-    '#33A1FF' 
+    '#FF5733', '#33FF57', '#3357FF', '#FF33A1',
+    '#A133FF', '#33FFA1', '#FF8C33', '#33A1FF'
   ];
 
-  // If index is within the range of predefined colors, return the predefined color
-  if (index < predefinedColors.length) {
-    return predefinedColors[index];
-  }
-
-  // Otherwise, generate a random color
-  return getRandomColor();
+  return index < predefinedColors.length ? predefinedColors[index] : getRandomColor();
 }
 
 function getRandomColor() {
@@ -140,6 +140,7 @@ function getRandomColor() {
   }
   return color;
 }
+
 
 
 export default DynamicGraph;
