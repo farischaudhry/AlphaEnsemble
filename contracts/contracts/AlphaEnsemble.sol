@@ -294,7 +294,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     }
 
     function updateAgentPositionsFromLLMResponse(uint agentRunId, string memory llmResponse) internal {
-        // Parsing the LLM response which is expected to be in the form {"BTC": 10, "ETH": -5, ...}
+        // Parsing the LLM response which is expected to be in the form {"BTC/USD": 10, "ETH/USD": -5, ...}
 
         // Strip leading/trailing braces {}
         bytes memory responseBytes = bytes(llmResponse);
