@@ -37,7 +37,7 @@ export default function Home() {
           <InstrumentOverview />
         </div>
         <div className="grid-item">
-          <DynamicGraph selectedAgents={['agent-001', 'agent-002']} />
+          <DynamicGraph selectedAgents={['agent-001', 'agent-002']} /> {/* replace with selectedAgents */}
         </div>
       </div>
       <Footer />
