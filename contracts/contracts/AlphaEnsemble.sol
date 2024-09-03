@@ -12,20 +12,10 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     struct Agent {
         int256 pnl; // Profit and Loss
         mapping(string => int256) positions; // Position of each asset (TICKER => POSITION)
+        IOracle.Message message;
     }
-
-    struct AgentRun {
-        IOracle.Message[] messages;
-        uint responsesCount;
-        uint8 max_iterations;
-        bool is_finished;
-        uint agentId;
-        address owner;
-    }
-
     Agent[] public agents;
-    mapping(uint => AgentRun) public agentRuns;
-    uint public agentRunCount; // Counter for the number of agent runs
+
 
     // Events
     event AssetPricesUpdated(string[] assets, uint256[] prices);
@@ -113,7 +103,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         for (uint256 i = 0; i < agents.length; i++) {
             // Generate the query and start new runs for each agent
             string memory query = generateLLMQuery(i);
-            startAgentRun(i, query, 1);
+            startAgentRun(i, query);
         }
     }
 
@@ -121,76 +111,50 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      * @notice Update the positions of the assets for a given agent
      * @param agentId ID of the agent
      * @param query Query to be sent to the LLM
-     * @param max_iterations The maximum number of iterations for the agent run
      */
-    function startAgentRun(uint256 agentId, string memory query, uint8 max_iterations) public returns (uint) {
+    function startAgentRun(uint256 agentId, string memory query) public returns (uint) {
         require(agentId < agents.length, "Invalid agent ID");
 
-        AgentRun storage run = agentRuns[agentRunCount];
-        run.is_finished = false;
-        run.responsesCount = 0;
-        run.max_iterations = max_iterations;
-        run.agentId = agentId;
-        run.owner = msg.sender;
-
         // Initialize the user message with the specific query for this agent
-        IOracle.Message memory userMessage = createTextMessage("user", query);
-        run.messages.push(userMessage);
-
-        uint currentRunId = agentRunCount;
-        agentRunCount++;
+        agents[agentId].message = createTextMessage("user", query);
 
         // Trigger an LLM call via the oracle
-        IOracle(oracleAddress).createOpenAiLlmCall(currentRunId, getDefaultOpenAiConfig());
+        IOracle(oracleAddress).createOpenAiLlmCall(agentId, getDefaultOpenAiConfig());
 
-        emit AgentRunStarted(currentRunId, agentId, query);
+        emit AgentRunStarted(agentId, agentId, query);
 
-        return currentRunId;
+        return agentId;
     }
 
     /**
      * @notice Callback function that handles the response from the LLM (OpenAI in this case)
-     * @param agentRunId The ID of the agent run that the response corresponds to
+     * @param agentId The ID of the agent run that the response corresponds to
      * @param response The response received from the LLM
      * @param errorMessage Any error message returned by the oracle (empty if no error)
      */
     function onOracleOpenAiLlmResponse(
-        uint agentRunId,
+        uint agentId,
         IOracle.OpenAiResponse memory response,
         string memory errorMessage
     ) public onlyOracle {
-        emit OracleResponseCallback(agentRunId, response.content, errorMessage);
-
-        AgentRun storage run = agentRuns[agentRunId];
-
-        if (bytes(errorMessage).length > 0) {
-            emit AgentRunCompleted(agentRunId, run.agentId, errorMessage);
-            run.is_finished = true;
-            return;
-        }
-
-        if (bytes(response.content).length > 0) {
-            run.messages.push(createTextMessage("assistant", response.content));
-            run.responsesCount++;
-        }
+        emit OracleResponseCallback(agentId, response.content, errorMessage);
 
         // Update the agent's positions based on the LLM response
-        updateAgentPositionsFromLLMResponse(agentRunId, response.content);
-
-        // Mark the agentRun as finished
-        run.is_finished = true;
-
-        emit AgentRunCompleted(agentRunId, run.agentId, response.content);
+        updateAgentPositionsFromLLMResponse(agentId, response.content);
     }
 
     /**
      * @notice Provides the message history to the oracle
      */
-    function getMessageHistory(uint agentRunId) public view returns (IOracle.Message[] memory) {
-        return agentRuns[agentRunId].messages;
+    function getMessageHistory(
+        uint agentId
+    ) public view returns (IOracle.Message[] memory) {
+        IOracle.Message[] memory messages = new IOracle.Message[](1);
+        messages[0] = agents[agentId].message;
+        return messages;
     }
 
-    function updateAgentPositionsFromLLMResponse(uint agentRunId, string memory llmResponse) internal {
+    function updateAgentPositionsFromLLMResponse(uint agentId, string memory llmResponse) internal {
         // Parsing the LLM response which is expected to be in the form {"BTC/USD": 10, "ETH/USD": -5, ...}
 
         // Strip leading/trailing braces {}
@@ -224,8 +188,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         }
 
         // Update the agent's positions using the setPositions function
-        AgentRun storage run = agentRuns[agentRunId];
-        setPositions(run.agentId, assets, positions);
+        setPositions(agentId, assets, positions);
     }
 
     /**
