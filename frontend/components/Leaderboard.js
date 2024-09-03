@@ -3,13 +3,7 @@ import { initializeContract, pollEvents } from '../contracts/contractInteraction
 import styles from '../styles/Leaderboard.module.css';
 
 function Leaderboard({ onAgentSelect }) {
-  const [leaderboard, setLeaderboard] = useState([
-    { team: 'agent-001', pnl: 0, position: { 'Asset 1': 5.0, 'Asset 2': 5.0 } },
-    { team: 'agent-002', pnl: 0, position: { 'Asset 1': 6.0, 'Asset 2': 4.0 } },
-    { team: 'agent-003', pnl: 0, position: { 'Asset 1': 2.0, 'Asset 2': 8.0 } },
-    { team: 'agent-004', pnl: 0, position: { 'Asset 1': 10.0, 'Asset 2': 0.0 } },
-    { team: 'agent-005', pnl: 0, position: { 'Asset 1': 1.0, 'Asset 2': 9.0 } },
-  ]);
+  const [leaderboard, setLeaderboard] = useState([]);
 
   const updateLeaderboard = (newEntry) => {
     setLeaderboard(prevLeaderboard => {
