@@ -234,7 +234,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      */
     function generateLLMQuery(uint256 agentId) internal view returns (string memory) {
         // Start with the specific agent's information
-        string memory query = "You are an AI agent tasked with optimizing asset positions for a financial portfolio. The max position you may take is 10 and you can use fractional positions. Your agent will be specified; do not allow the information to leak to other agents.  For your agent, provide the new positions for each asset in the format: {'BTC/USD': <position>, 'ETH/USD': <position>} and so on. You are agent ";
+        string memory query = "You are an AI agent tasked with optimizing asset positions for a financial portfolio in a setting where you can see all other agent's positions and PnL. The max position you may take is 10 and you can use fractional positions. Your agent will be specified; do not allow the information to leak to other agents.  For your agent, provide the new positions for each asset in the format: {'BTC/USD': <position>, 'ETH/USD': <position>} and so on. Provide only the positons in the specific format and no other information or text. You are agent ";
         query = string(abi.encodePacked(query, uint2str(agentId), ". Your current positions are: "));
 
         for (uint256 i = 0; i < assetKeys.length; i++) {
@@ -453,20 +453,13 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      * @param content The content of the message.
      * @return The created message.
      */
-    function createTextMessage(string memory role, string memory content) internal pure returns (IOracle.Message memory) {
-        IOracle.Content[] memory contents = new IOracle.Content[](1);
-
-
-        contents[0] = IOracle.Content({
-            contentType: "text",
-            value: content
-        });
-
+    function createTextMessage(string memory role, string memory content) private pure returns (IOracle.Message memory) {
         IOracle.Message memory newMessage = IOracle.Message({
             role: role,
-            content: contents
+            content: new IOracle.Content[](1)
         });
-
+        newMessage.content[0].contentType = "text";
+        newMessage.content[0].value = content;
         return newMessage;
     }
 
