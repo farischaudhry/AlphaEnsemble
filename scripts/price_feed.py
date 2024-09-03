@@ -72,7 +72,7 @@ chain_id = 696969  # Galadriel testnet chain ID
 
 # Upkeep intervals
 price_update_interval = 15  # seconds
-llm_update_interval = 60 * 5  # 5 minutes
+llm_update_interval = 30  # 5 minutes
 last_price_update_time = time.time()
 last_llm_update_time = time.time()
 

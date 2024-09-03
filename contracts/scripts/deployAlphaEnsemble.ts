@@ -16,7 +16,7 @@ async function main() {
   const oracleAddress: string = process.env.ORACLE_ADDRESS;
 
   // Specify the number of agents for the deployment
-  const numAgents: number = 5;
+  const numAgents: number = 1;
 
   // Deploy the AlphaEnsemble contract
   const contract = await deployAlphaEnsemble(oracleAddress, numAgents);

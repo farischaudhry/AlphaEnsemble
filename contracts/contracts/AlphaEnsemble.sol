@@ -17,7 +17,6 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     struct AgentRun {
         IOracle.Message[] messages;
         uint responsesCount;
-        uint8 max_iterations;
         bool is_finished;
         uint agentId;
         address owner;
@@ -75,6 +74,8 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     // LLM/Update functions
     // ====================================================================================================
 
+    IOracle.Message public message;
+
     function updateAssetPricesManual(string[] memory assets, uint256[] memory prices) public onlyOwner {
         require(assets.length == prices.length, "Assets and prices arrays must have the same length");
 
@@ -113,7 +114,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         for (uint256 i = 0; i < agents.length; i++) {
             // Generate the query and start new runs for each agent
             string memory query = generateLLMQuery(i);
-            startAgentRun(i, query, 1);
+            startAgentRun(i, query);
         }
     }
 
@@ -121,21 +122,28 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      * @notice Update the positions of the assets for a given agent
      * @param agentId ID of the agent
      * @param query Query to be sent to the LLM
-     * @param max_iterations The maximum number of iterations for the agent run
      */
-    function startAgentRun(uint256 agentId, string memory query, uint8 max_iterations) public returns (uint) {
+    function startAgentRun(uint256 agentId, string memory query) public returns (uint) {
         require(agentId < agents.length, "Invalid agent ID");
 
-        AgentRun storage run = agentRuns[agentRunCount];
-        run.is_finished = false;
-        run.responsesCount = 0;
-        run.max_iterations = max_iterations;
-        run.agentId = agentId;
-        run.owner = msg.sender;
+        // AgentRun storage run = agentRuns[agentRunCount];
+        // run.is_finished = false;
+        // run.responsesCount = 0;
+        // run.agentId = agentId;
+        // run.owner = msg.sender;
 
-        // Initialize the user message with the specific query for this agent
-        IOracle.Message memory userMessage = createTextMessage("user", query);
-        run.messages.push(userMessage);
+        // // Store the initialized struct in the mapping
+        // agentRuns[agentRunCount] = newRun;
+
+        // AgentRun storage run = agentRuns[agentRunCount];
+        // run.is_finished = false;
+        // run.responsesCount = 0;
+        // run.agentId = agentId;
+        // run.owner = msg.sender;
+
+        // // Initialize the user message with the specific query for this agent
+        message = createTextMessage("user", query);
+        // run.messages.push(userMessage);
 
         uint currentRunId = agentRunCount;
         agentRunCount++;
@@ -186,8 +194,12 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     /**
      * @notice Provides the message history to the oracle
      */
-    function getMessageHistory(uint agentRunId) public view returns (IOracle.Message[] memory) {
-        return agentRuns[agentRunId].messages;
+    function getMessageHistory(
+        uint /*_runId*/
+    ) public view returns (IOracle.Message[] memory) {
+        IOracle.Message[] memory messages = new IOracle.Message[](1);
+        messages[0] = message;
+        return messages;
     }
 
     function updateAgentPositionsFromLLMResponse(uint agentRunId, string memory llmResponse) internal {
