@@ -12,6 +12,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     struct Agent {
         int256 pnl; // Profit and Loss
         mapping(string => int256) positions; // Position of each asset (TICKER => POSITION)
+        IOracle.Message message;
     }
     Agent[] public agents;
 
@@ -64,8 +65,6 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     // LLM/Update functions
     // ====================================================================================================
 
-    IOracle.Message public message;
-
     function updateAssetPricesManual(string[] memory assets, uint256[] memory prices) public onlyOwner {
         require(assets.length == prices.length, "Assets and prices arrays must have the same length");
 
@@ -117,7 +116,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         require(agentId < agents.length, "Invalid agent ID");
 
         // Initialize the user message with the specific query for this agent
-        message = createTextMessage("user", query);
+        agents[agentId].message = createTextMessage("user", query);
 
         // Trigger an LLM call via the oracle
         IOracle(oracleAddress).createOpenAiLlmCall(agentId, getDefaultOpenAiConfig());
@@ -151,7 +150,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         uint agentId
     ) public view returns (IOracle.Message[] memory) {
         IOracle.Message[] memory messages = new IOracle.Message[](1);
-        messages[0] = message;
+        messages[0] = agents[agentId].message;
         return messages;
     }
 
