@@ -48,7 +48,6 @@ export async function pollEvents(updateInstrumentOverview, updateLeaderboard) {
     console.log(`Positions updated for agentID: ${agentID}, assets: ${assets}, positions: ${positions}`);
     const leaderboardEntry = {
       team: `team-${agentID}`,
-      pnl: positions.reduce((total, pos) => total + parseFloat(pos), 0),
       position: positions.reduce((total, pos) => total + parseFloat(pos), 0),
     };
     updateLeaderboard(leaderboardEntry);
