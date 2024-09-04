@@ -204,7 +204,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      */
     function generateLLMQuery(uint256 agentId) internal view returns (string memory) {
         // Start with the specific agent's information
-        string memory query = "You are an AI agent tasked with optimizing asset positions for a financial portfolio in a setting where you can see all other agent's positions and PnL. The max position you may take is 10 and you can use fractional positions. Your agent will be specified; do not allow the information to leak to other agents.  For your agent, provide the new positions for each asset in the format: {'BTC': <position>, 'ETH': <position>} and so on. Provide only the positons in the specific format and no other information or text. You are agent ";
+        string memory query = "You are an AI agent tasked with optimizing asset positions for a financial portfolio in a setting where you can see all other agent's positions and PnL. You may take positions between -10 and 10, including fractional values. Provide the new positions for each asset in the format: {'BTC': <position>, 'ETH': <position>} and nothing else. You are agent ";
         query = string(abi.encodePacked(query, uint2str(agentId), ". Your current positions are: "));
 
         for (uint256 i = 0; i < assetKeys.length; i++) {
@@ -215,22 +215,29 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
 
         // Add information about other agents
         query = string(abi.encodePacked(query, " Other agents' positions and total PnL: "));
-
         for (uint256 j = 0; j < agents.length; j++) {
             if (j != agentId) {  // Exclude the current agent's own info
                 query = string(abi.encodePacked(query, "Agent ", uint2str(j), " - PnL: ", int2str(agents[j].totalPnl), "; Positions: "));
-
                 for (uint256 k = 0; k < assetKeys.length; k++) {
                     string memory asset = assetKeys[k];
                     int256 otherPosition = agents[j].positions[asset];
                     query = string(abi.encodePacked(query, asset, "=", int2str(otherPosition), "; "));
                 }
-
                 query = string(abi.encodePacked(query, " "));
             }
         }
 
-        query = string(abi.encodePacked(query, " Return new positions given this information."));
+        // Include current asset prices
+        query = string(abi.encodePacked(query, " Current asset prices: "));
+        for (uint256 i = 0; i < assetKeys.length; i++) {
+            string memory asset = assetKeys[i];
+            uint256 currentPrice = assetPrices[asset];
+            query = string(abi.encodePacked(query, asset, "=", uint2str(currentPrice), "; "));
+        }
+
+        // Additional instructions for penalizing similar choices and rebalancing frequency
+        query = string(abi.encodePacked(query, " Avoid choosing identical positions to other agents. Note that rebalancing will only occur every 5 minutes, so plan accordingly. Optimize for maximum PnL while minimizing transaction costs and keeping a diverse portfolio. Return the new positions now to maximize PnL."));
+
         return query;
     }
 
