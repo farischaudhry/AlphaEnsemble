@@ -60,15 +60,9 @@ export async function pollEvents(updateInstrumentOverview, updateLeaderboard) {
     console.log(`PnL updated for agentID: ${agentID}, pnl: ${pnl}`);
     const leaderboardEntry = {
       team: `team-${agentID}`,
-      pnl: parseFloat(pnl),
+      pnl: ethers.formatUnits(pnl, 8),
     };
     updateLeaderboard(leaderboardEntry);
-  });
-
-  const oracleCallbackEvents = await contract.queryFilter("OracleResponseCallback", lastCheckedBlock, latestBlock);
-  oracleCallbackEvents.forEach((event) => {
-      const { agentRunId, response, errorMessage } = event.args;
-      console.log(`Oracle response for agentRunId: ${agentRunId}, response: ${response}, errorMessage: ${errorMessage}`);
   });
 
   // Poll for AgentRunStarted events
@@ -76,6 +70,12 @@ export async function pollEvents(updateInstrumentOverview, updateLeaderboard) {
   agentRunStartedEvents.forEach((event) => {
       const { agentRunId, agentId, query } = event.args;
       console.log(`Agent run started for agentRunId: ${agentRunId}, agentID: ${agentId}, query: ${query}`);
+  });
+
+  const oracleCallbackEvents = await contract.queryFilter("OracleResponseCallback", lastCheckedBlock, latestBlock);
+  oracleCallbackEvents.forEach((event) => {
+      const { agentRunId, response, errorMessage } = event.args;
+      console.log(`Oracle response for agentRunId: ${agentRunId}, response: ${response}, errorMessage: ${errorMessage}`);
   });
 
   // Update the last checked block to the latest block

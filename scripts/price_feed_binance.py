@@ -101,6 +101,7 @@ def update_alpha_ensemble_asset_prices():
         tx_hash = galadriel_web3.eth.send_raw_transaction(signed_txn.rawTransaction)
         receipt = galadriel_web3.eth.wait_for_transaction_receipt(tx_hash)
         print(f"Updated prices on AlphaEnsembleContract with Tx: {tx_hash.hex()}, Status: {receipt['status']}")
+        print(f"Gas used: {receipt['gasUsed']}")
     except Exception as e:
         print(f"Failed to update prices in AlphaEnsembleContract on Galadriel: {e}")
 
