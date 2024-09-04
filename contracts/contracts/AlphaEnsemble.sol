@@ -10,12 +10,13 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     address public oracleAddress;
 
     struct Agent {
-        int256 pnl; // Profit and Loss
+        int256 totalPnl; // Total realized PnL
         mapping(string => int256) positions; // Position of each asset (TICKER => POSITION)
+        mapping(string => uint256) longCostBasis; // Weighted average cost for long positions for each asset
+        mapping(string => uint256) shortCostBasis; // Weighted average cost for short positions for each asset
         IOracle.Message message;
     }
     Agent[] public agents;
-
 
     // Events
     event AssetPricesUpdated(string[] assets, uint256[] prices);
@@ -51,12 +52,14 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         // Add an agent to the agents array
         for (uint256 i = 0; i < numAgents; i++) {
             Agent storage newAgent = agents.push();
-            newAgent.pnl = 0;
+            newAgent.totalPnl = 0;
 
             // Initialize the positions of the assets for the agent
             for (uint256 j = 0; j < assetKeys.length; j++) {
                 string memory asset = assetKeys[j];
                 newAgent.positions[asset] = 0;
+                newAgent.longCostBasis[asset] = 0;
+                newAgent.shortCostBasis[asset] = 0;
             }
         }
     }
@@ -87,11 +90,18 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             for (uint256 j = 0; j < assetKeys.length; j++) {
                 string memory asset = assetKeys[j];
                 int256 position = agents[i].positions[asset];
-                uint256 price = assetPrices[asset];
-                pnl += position * int256(price);
+                uint256 currentPrice = assetPrices[asset];
+
+                if (position > 0) {
+                    // Long position
+                    pnl += position * int256(currentPrice - agents[i].longCostBasis[asset]);
+                } else if (position < 0) {
+                    // Short position
+                    pnl += position * int256(agents[i].shortCostBasis[asset] - currentPrice);
+                }
             }
 
-            agents[i].pnl = pnl;
+            agents[i].totalPnl = pnl;
             emit PnLUpdated(i, pnl);
         }
     }
@@ -211,7 +221,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
 
         for (uint256 j = 0; j < agents.length; j++) {
             if (j != agentId) {  // Exclude the current agent's own info
-                query = string(abi.encodePacked(query, "Agent ", uint2str(j), " - PnL: ", int2str(agents[j].pnl), "; Positions: "));
+                query = string(abi.encodePacked(query, "Agent ", uint2str(j), " - PnL: ", int2str(agents[j].totalPnl), "; Positions: "));
 
                 for (uint256 k = 0; k < assetKeys.length; k++) {
                     string memory asset = assetKeys[k];
@@ -231,14 +241,14 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     // Setter/getter functions
     // ====================================================================================================
 
-        /**
+    /**
      * @notice Get the PnL for a specific agent
      * @param agentId ID of the agent
      * @return pnl PnL of the agent
      */
     function getPnl(uint agentId) external view returns (int256) {
         require(agentId < agents.length, "Invalid agent ID");
-        return agents[agentId].pnl;
+        return agents[agentId].totalPnl;
     }
 
     /**
@@ -263,21 +273,62 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      * @notice Sets the positions for multiple assets for a given agent
      * @param agentId ID of the agent
      * @param assets Array of asset tickers (e.g., ["BTC", "ETH"])
-     * @param positions Array of new position values for the corresponding assets
+     * @param newPositions Array of new position values for the corresponding assets
      */
-    function setPositions(uint agentId, string[] memory assets, int256[] memory positions) public {
+    function setPositions(uint agentId, string[] memory assets, int256[] memory newPositions) public {
         require(agentId < agents.length, "Invalid agent ID");
-        require(assets.length == positions.length, "Assets and positions arrays must have the same length");
+        require(assets.length == newPositions.length, "Assets and positions arrays must have the same length");
 
-        for (uint256 i = 0; i < assets.length; i++) {
-            require(bytes(assets[i]).length > 0, "Asset ticker cannot be empty");
+        Agent storage agent = agents[agentId];
 
-            // Update the position for each asset
-            agents[agentId].positions[assets[i]] = positions[i];
+        for (uint i = 0; i < assets.length; i++) {
+            string memory asset = assets[i];
+            int256 newPosition = newPositions[i];
+            int256 currentPosition = agent.positions[asset];
+            uint256 currentPrice = assetPrices[asset];
+
+            if (newPosition == 0) {
+                // Closing the position, realize any remaining PnL
+                agent.totalPnl += (currentPosition > 0)
+                    ? currentPosition * int256(currentPrice - agent.longCostBasis[asset])
+                    : currentPosition * int256(agent.shortCostBasis[asset] - currentPrice);
+
+                agent.positions[asset] = 0;
+                agent.longCostBasis[asset] = 0;
+                agent.shortCostBasis[asset] = 0;
+
+            } else if ((currentPosition > 0 && newPosition < 0) || (currentPosition < 0 && newPosition > 0)) {
+                // Switching from long to short or short to long, realize PnL and reset cost basis
+                agent.totalPnl += (currentPosition > 0)
+                    ? currentPosition * int256(currentPrice - agent.longCostBasis[asset])
+                    : currentPosition * int256(agent.shortCostBasis[asset] - currentPrice);
+
+                if (newPosition > 0) {
+                    agent.longCostBasis[asset] = currentPrice;
+                    agent.shortCostBasis[asset] = 0;
+                } else {
+                    agent.shortCostBasis[asset] = currentPrice;
+                    agent.longCostBasis[asset] = 0;
+                }
+                agent.positions[asset] = newPosition;
+
+            } else {
+                // Same direction, update the weighted average cost basis
+                if (newPosition > 0) {
+                    uint256 oldCost = agent.longCostBasis[asset] * uint256(currentPosition);
+                    uint256 newCost = currentPrice * uint256(newPosition);
+                    agent.longCostBasis[asset] = (oldCost + newCost) / uint256(newPosition);
+                } else {
+                    uint256 oldCost = agent.shortCostBasis[asset] * uint256(-currentPosition);
+                    uint256 newCost = currentPrice * uint256(-newPosition);
+                    agent.shortCostBasis[asset] = (oldCost + newCost) / uint256(-newPosition);
+                }
+                agent.positions[asset] = newPosition;
+            }
         }
 
         // Emit an event to notify that the positions have been updated
-        emit PositionsUpdated(agentId, assets, positions);
+        emit PositionsUpdated(agentId, assets, newPositions);
     }
 
     /**
@@ -527,8 +578,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         bool priceUpdateNeeded = (block.timestamp - lastPriceUpdateTime) > priceUpdateInterval;
         bool llmUpdateNeeded = (block.timestamp - lastLlmUpdateTime) > llmUpdateInterval;
 
-        upkeepNeeded = llmUpdateNeeded;
-        // upkeepNeeded = priceUpdateNeeded || llmUpdateNeeded;
+        upkeepNeeded = llmUpdateNeeded || priceUpdateNeeded;
         performData = abi.encode(priceUpdateNeeded, llmUpdateNeeded);
     }
 
