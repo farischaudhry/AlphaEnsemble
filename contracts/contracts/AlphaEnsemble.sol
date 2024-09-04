@@ -82,21 +82,23 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         for (uint256 i = 0; i < agents.length; i++) {
             int256 pnl = 0;
 
+            // Cache agent in memory to minimize repeated storage access
+            Agent storage agent = agents[i];
             for (uint256 j = 0; j < assetKeys.length; j++) {
                 string memory asset = assetKeys[j];
-                int256 position = agents[i].positions[asset];
+                int256 position = agent.positions[asset];
                 uint256 currentPrice = assetPrices[asset];
 
                 if (position > 0) {
                     // Long position
-                    pnl += position * int256(currentPrice - agents[i].longCostBasis[asset]);
+                    pnl += position * int256(currentPrice - agent.longCostBasis[asset]);
                 } else if (position < 0) {
                     // Short position
-                    pnl += position * int256(agents[i].shortCostBasis[asset] - currentPrice);
+                    pnl += position * int256(agent.shortCostBasis[asset] - currentPrice);
                 }
             }
 
-            agents[i].totalPnl = pnl;
+            agent.totalPnl = pnl;  // Write back the updated PnL at the end
             emit PnLUpdated(i, pnl);
         }
     }
@@ -283,21 +285,22 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             uint256 currentPrice = assetPrices[asset];
 
             if (newPosition == 0) {
-                // Closing the position, realize any remaining PnL
-                agent.totalPnl += (currentPosition > 0)
-                    ? currentPosition * int256(currentPrice - agent.longCostBasis[asset])
-                    : currentPosition * int256(agent.shortCostBasis[asset] - currentPrice);
-
-                agent.positions[asset] = 0;
-                agent.longCostBasis[asset] = 0;
-                agent.shortCostBasis[asset] = 0;
-
+                // Closing the position
+                if (currentPosition != 0) {
+                    agent.totalPnl += currentPosition > 0
+                        ? currentPosition * int256(currentPrice - agent.longCostBasis[asset])
+                        : currentPosition * int256(agent.shortCostBasis[asset] - currentPrice);
+                    agent.positions[asset] = 0;
+                    agent.longCostBasis[asset] = 0;
+                    agent.shortCostBasis[asset] = 0;
+                }
             } else if ((currentPosition > 0 && newPosition < 0) || (currentPosition < 0 && newPosition > 0)) {
-                // Switching from long to short or short to long, realize PnL and reset cost basis
-                agent.totalPnl += (currentPosition > 0)
+                // Switching direction
+                agent.totalPnl += currentPosition > 0
                     ? currentPosition * int256(currentPrice - agent.longCostBasis[asset])
                     : currentPosition * int256(agent.shortCostBasis[asset] - currentPrice);
 
+                agent.positions[asset] = newPosition;
                 if (newPosition > 0) {
                     agent.longCostBasis[asset] = currentPrice;
                     agent.shortCostBasis[asset] = 0;
@@ -305,10 +308,8 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
                     agent.shortCostBasis[asset] = currentPrice;
                     agent.longCostBasis[asset] = 0;
                 }
-                agent.positions[asset] = newPosition;
-
             } else {
-                // Same direction, update the weighted average cost basis
+                // Same direction, update cost basis if needed
                 if (newPosition > 0) {
                     uint256 oldCost = agent.longCostBasis[asset] * uint256(currentPosition);
                     uint256 newCost = currentPrice * uint256(newPosition);
@@ -322,7 +323,6 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             }
         }
 
-        // Emit an event to notify that the positions have been updated
         emit PositionsUpdated(agentId, assets, newPositions);
     }
 
@@ -331,8 +331,16 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      * @param asset Asset ticker (e.g., "BTC", "ETH")
      * @param feedAddress Price feed contract address for the asset
      */
-    function setPriceFeed(string memory asset, address feedAddress) public {
+    function setPriceFeed(string memory asset, address feedAddress) public onlyOwner {
         priceFeeds[asset] = feedAddress;
+    }
+
+    /**
+     *
+     * @param _oracleAddress The address of the Galadriel oracle contract
+     */
+    function setOracleAddress(address _oracleAddress) public onlyOwner {
+        oracleAddress = _oracleAddress;
     }
 
     // ====================================================================================================
@@ -595,7 +603,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         }
     }
 
-    function updateAssetPrices() public {
+    function updateAssetPrices() internal {
         string[] memory assets = new string[](assetKeys.length);
         uint256[] memory prices = new uint256[](assetKeys.length);
 
@@ -629,9 +637,5 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     modifier onlyOracle() {
         require(msg.sender == oracleAddress, "Only the oracle can call this function");
         _;
-    }
-
-    function setOracleAddress(address _oracleAddress) public onlyOwner {
-        oracleAddress = _oracleAddress;
     }
 }
