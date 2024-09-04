@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import styles from '../styles/DynamicGraph.module.css';
 import {
@@ -28,22 +28,55 @@ function DynamicGraph({ selectedAgents }) {
     return <p>No agents selected. Please select agents to view the graph.</p>;
   }
 
-  // Example data structure
-  const allAgentData = {
-    'agent-001': {
-      data: [19000, 19500, 20000, 20000, 20000, 20000],
-      color: '#FF5733', // Assign a predefined color
-    },
-    'agent-002': {
-      data: [0, 0, 0, 0, 0, 0],
-      color: '#33FF57', // Assign a predefined color
-    },
-    'agent-003': {
-      data: [15000, 15500, 16000, 16500, 17000, 17500],
-      color: '#3357FF', // Assign a predefined color
-    },
+  const [allAgentData, setAllAgentData] = useState({
+      'agent-001': {
+        data: [19000, 19500, 20000, 20000, 20000, 20000],
+        color: '#FF5733', // Assign a predefined color
+      },
+      'agent-002': {
+        data: [0, 0, 0, 0, 0, 0],
+        color: '#33FF57', // Assign a predefined color
+      },
+      'agent-003': {
+        data: [15000, 15500, 16000, 16500, 17000, 17500],
+        color: '#3357FF', // Assign a predefined color
+      },
+    }
+  );
+
+  const updateAgentData = (newEntry) => {
+    setAllAgentData(prevAllAgentData => {
+      const { team, pnl } = newEntry;
+
+      // Check if the agent already exists in the state
+      const agentExists = prevAllAgentData[team] !== undefined;
+
+      // Create a new data array for the updated agent
+      let updatedDataArray;
+
+      if (agentExists) {
+        // If the agent exists, get the existing data and append the new pnl value
+        const existingDataArray = prevAllAgentData[team].data;
+        updatedDataArray = [...existingDataArray, pnl];
+
+        // Keep only the most recent 10 entries
+        if (updatedDataArray.length > 10) {
+          updatedDataArray = updatedDataArray.slice(-10);
+        }
+      } else {
+        updatedDataArray = [pnl];
+      }
+
+      // Update the agent data in the state
+      return {
+        ...prevAllAgentData,
+        [team]: {
+          ...prevAllAgentData[team],
+          data: updatedDataArray,
+        },
+      };
+    });
   };
-  
 
   const datasets = selectedAgents.map((agentId, index) => {
     const agentInfo = allAgentData[agentId] || {};

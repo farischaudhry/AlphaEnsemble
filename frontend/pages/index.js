@@ -40,7 +40,7 @@ export default function Home() {
           <InstrumentOverview />
         </div>
         <div className="grid-item">
-          <DynamicGraph selectedAgents={["agent-001"]} /> {/* replace with selectedAgents */}
+          <DynamicGraph selectedAgents={selectedAgents} /> {/* replace with selectedAgents */}
         </div>
         <div className="grid-item">
           <PositionPieGraph agentId={"agent-002"} /> {/* replace with selectedAgents */}
