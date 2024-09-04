@@ -1,22 +1,31 @@
 .leaderboard {
-    margin-top: 20px;
-  }
+  margin-top: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
 
-  .leaderboard table {
-    width: 100%;
-    border-collapse: collapse;
-  }
+.leaderboard table {
+  width: 100%;
+  border-collapse: collapse;
+}
 
-  .leaderboard th, .leaderboard td {
-    padding: 10px;
-    border: 1px solid #28293e;
-    text-align: left;
-  }
+.leaderboard th,
+.leaderboard td {
+  padding: 10px;
+  border: 1px solid #28293e;
+  text-align: left;
+}
 
-  .leaderboard th {
-    background-color: #2c2c3e;
-  }
+.leaderboard th {
+  background-color: #2c2c3e;
+  position: sticky;
+  top: 0;
+}
 
-  .leaderboard tr:nth-child(even) {
-    background-color: #28293e;
-  }
+.leaderboard tbody tr:hover {
+  background-color: #34344b;
+}
+
+.leaderboard tr:nth-child(even) {
+  background-color: #28293e;
+}

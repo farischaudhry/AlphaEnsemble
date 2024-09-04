@@ -1,9 +1,7 @@
 .instrument-overview {
   margin-top: 20px;
-}
-
-.instrument-overview h2 {
-  margin-bottom: 10px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .instrument-overview table {
@@ -18,8 +16,18 @@
   text-align: left;
 }
 
+.instrument-overview th {
+  background-color: #2c2c3e;
+  position: sticky;
+  top: 0;
+}
+
 .instrument-overview tbody tr:hover {
   background-color: #34344b;
+}
+
+.instrument-overview tr:nth-child(even) {
+  background-color: #28293e;
 }
 
 .instrument-overview tbody tr {
