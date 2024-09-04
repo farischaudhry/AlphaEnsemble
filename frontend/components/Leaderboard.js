@@ -63,7 +63,7 @@ function Leaderboard({ onAgentSelect }) {
             <tr key={index} onClick={() => handleRowClick(entry.team)}>
               <td>{index + 1}</td>
               <td>{entry.team}</td>
-              <td>{(entry.pnl ?? 0).toFixed(2)}</td>
+              <td>{Number(entry.pnl ?? 0).toFixed(2)}</td>
               {/* <td>{entry.position}</td> */}
             </tr>
           ))}
