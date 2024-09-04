@@ -30,12 +30,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     mapping(string => address) public priceFeeds;
     mapping(string => uint256) public assetPrices;
     // Array of asset tickers
-    string[] public assetKeys = [
-        "AUD/USD", "BTC/USD", "CSPX/USD", "CZK/USD", "DAI/USD",
-        "ETH/USD", "EUR/USD", "FORTH/USD", "GBP/USD", "GHO/USD",
-        "IB01/USD", "IBTA/USD", "JPY/USD", "LINK/USD", "SNX/USD",
-        "SUSDE/USD", "USDC/USD", "USDE/USD", "WSTETH/USD", "XAU/USD"
-    ];
+    string[] public assetKeys = ['BTC', 'ETH', 'BNB', 'ADA', 'LINK', 'SOL', 'XRP', 'DOGE', 'DOT', 'MATIC'];
 
     constructor(address _oracleAddress, uint256 numAgents) Ownable(msg.sender) {
         oracleAddress = _oracleAddress; // Set the oracle address during contract deployment
@@ -207,7 +202,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      */
     function generateLLMQuery(uint256 agentId) internal view returns (string memory) {
         // Start with the specific agent's information
-        string memory query = "You are an AI agent tasked with optimizing asset positions for a financial portfolio in a setting where you can see all other agent's positions and PnL. The max position you may take is 10 and you can use fractional positions. Your agent will be specified; do not allow the information to leak to other agents.  For your agent, provide the new positions for each asset in the format: {'BTC/USD': <position>, 'ETH/USD': <position>} and so on. Provide only the positons in the specific format and no other information or text. You are agent ";
+        string memory query = "You are an AI agent tasked with optimizing asset positions for a financial portfolio in a setting where you can see all other agent's positions and PnL. The max position you may take is 10 and you can use fractional positions. Your agent will be specified; do not allow the information to leak to other agents.  For your agent, provide the new positions for each asset in the format: {'BTC': <position>, 'ETH': <position>} and so on. Provide only the positons in the specific format and no other information or text. You are agent ";
         query = string(abi.encodePacked(query, uint2str(agentId), ". Your current positions are: "));
 
         for (uint256 i = 0; i < assetKeys.length; i++) {
