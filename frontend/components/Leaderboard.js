@@ -4,11 +4,12 @@ import styles from '../styles/Leaderboard.module.css';
 
 function Leaderboard({ onAgentSelect }) {
   const [leaderboard, setLeaderboard] = useState([
-    { team: 'agent-001', pnl: 1000, position: 1 },
-    { team: 'agent-002', pnl: 2000, position: 2 },
-    { team: 'agent-003', pnl: 3000, position: 3 },
+    { team: 'agent-001', pnl: 1000 },
+    { team: 'agent-002', pnl: 2000 },
+    { team: 'agent-003', pnl: 3000 },
   ]);
 
+  // console.log(leaderboard);
   const updateLeaderboard = (newEntry) => {
     setLeaderboard(prevLeaderboard => {
       const existingEntryIndex = prevLeaderboard.findIndex(entry => entry.team === newEntry.team);
@@ -50,6 +51,19 @@ function Leaderboard({ onAgentSelect }) {
     }
   };
 
+  const getPnlStyle = (team, pnl) => {
+    const prevLeaderboard = prevLeaderboardRef.current;
+    const prevEntry = prevLeaderboard.find(entry => entry.team === team);
+    if (prevEntry) {
+      if (pnl > prevEntry.pnl) {
+        return { color: 'green' };
+      } else if (pnl < prevEntry.pnl) {
+        return { color: 'red' };
+      } 
+    }
+    return {}; 
+  };
+
   return (
     <div className={styles.leaderboard}>
       <h2>Leaderboard</h2>
@@ -59,7 +73,6 @@ function Leaderboard({ onAgentSelect }) {
             <th>Rank</th>
             <th>Teams</th>
             <th>PnL</th>
-            {/* <th>Position</th> */}
           </tr>
         </thead>
         <tbody>
@@ -67,8 +80,7 @@ function Leaderboard({ onAgentSelect }) {
             <tr key={index} onClick={() => handleRowClick(entry.team)}>
               <td>{index + 1}</td>
               <td>{entry.team}</td>
-              <td>{Number(entry.pnl ?? 0).toFixed(2)}</td>
-              {/* <td>{entry.position}</td> */}
+              <td style={getPnlStyle(entry.team, entry.pnl)}>{Number(entry.pnl ?? 0).toFixed(2)}</td>
             </tr>
           ))}
         </tbody>

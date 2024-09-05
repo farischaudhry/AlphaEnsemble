@@ -28,7 +28,7 @@ function DynamicGraph({ selectedAgents }) {
     return <p>No agents selected. Please select agents to view the graph.</p>;
   }
 
-  const [allAgentData, setAllAgentData] = useState({
+  const [allPnlData, setAllAPnlData] = useState({
       'agent-001': {
         data: [19000, 19500, 20000, 20000, 20000, 20000],
         color: '#FF5733', // Assign a predefined color
@@ -44,35 +44,39 @@ function DynamicGraph({ selectedAgents }) {
     }
   );
 
-  const updateAgentData = (newEntry) => {
-    setAllAgentData(prevAllAgentData => {
-      const { team, pnl } = newEntry;
+  console.log(allAgentData);
+  
+  const updatePnlData = (newEntry) => {
+    setAllAPnlData(prevPositionData => {
 
       // Check if the agent already exists in the state
-      const agentExists = prevAllAgentData[team] !== undefined;
+      const agentExists = prevPositionData[team] !== undefined;
 
       // Create a new data array for the updated agent
-      let updatedDataArray;
+      let updatedPnlData;
+      let agentColor 
 
       if (agentExists) {
         // If the agent exists, get the existing data and append the new pnl value
-        const existingDataArray = prevAllAgentData[team].data;
-        updatedDataArray = [...existingDataArray, pnl];
+        const existingDataArray = prevPositionData[team].data;
+        updatedPnlData = [...existingDataArray, pnl];
+        agentColor = prevPnlData[team].color;
 
         // Keep only the most recent 10 entries
-        if (updatedDataArray.length > 10) {
-          updatedDataArray = updatedDataArray.slice(-10);
+        if (updatedPnlData.length > 10) {
+          updatedPnlData = updatedPnlData.slice(-10);
         }
       } else {
-        updatedDataArray = [pnl];
+        updatePnlData = [pnl];
+        const newAgentIndex = Object.keys(prevPnlData).length;
+        agentColor = getColor(newAgentIndex);
       }
 
-      // Update the agent data in the state
       return {
-        ...prevAllAgentData,
+        ...prevPnlData,
         [team]: {
-          ...prevAllAgentData[team],
-          data: updatedDataArray,
+          data: updatedPnlData,
+          color: agentColor,
         },
       };
     });

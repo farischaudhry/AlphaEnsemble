@@ -46,11 +46,18 @@ export async function pollEvents(updateInstrumentOverview, updateLeaderboard) {
   positionsUpdatedEvents.forEach((event) => {
     const { agentID, assets, positions } = event.args;
     console.log(`Positions updated for agentID: ${agentID}, assets: ${assets}, positions: ${positions}`);
-    const leaderboardEntry = {
+    const positionsDict = assets.reduce((acc, asset, index) => {
+      acc[asset] = positions[index];
+      return acc;
+    }, {});
+    const positionData = {
       team: `team-${agentID}`,
-      position: positions.reduce((total, pos) => total + parseFloat(pos), 0),
-    };
-    updateLeaderboard(leaderboardEntry);
+      positions: assets.map((asset, index) => ({
+        asset,
+        position: positionsDict, // positions[index],
+      })),
+    }
+    updatePositionData(positionData);
   });
 
   // Poll for PnLUpdated events
@@ -63,6 +70,7 @@ export async function pollEvents(updateInstrumentOverview, updateLeaderboard) {
       pnl: ethers.formatUnits(pnl, 8),
     };
     updateLeaderboard(leaderboardEntry);
+    updatePnlData(leaderboardEntry);
   });
 
   // Poll for AgentRunStarted events

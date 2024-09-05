@@ -6,33 +6,43 @@ import 'chart.js/auto';
 const PositionPieGraph = ({ agentId }) => {
   const [positionData, setPositionData] = useState({});
 
-  useEffect(() => {
-    if (!agentId) return;
+  // const updatePositionData = (newEntry) => {
+  //   setPositionData(prevPositionData => {
+  //     const existingEntryIndex = prevPositionData.findIndex(entry => entry.team === newEntry.team);
 
-    async function fetchPositionData() {
-      const position = await getPositionDataForAgent(agentId);
-      setPositionData(position);
-    }
+  //     let updatedPositionData;
 
-    fetchPositionData();
-  }, [agentId]);
+  //     if (existingEntryIndex !== -1) {
+  //        // Update existing entry
+  //       updatedPositionData = [...prevPositionData];
+  //       updatedPositionData[existingEntryIndex] = { ...updatedPositionData[existingEntryIndex], ...newEntry };
+  //     } else {
+  //       // Add new entry
+  //       updatedPositionData = [...prevLeaderboard, newEntry];
+  //     }
+  //     return updatedPositionData;
+  //   });
+  // };
 
-  const getPositionDataForAgent = async (agentId) => {
-    const mockData = {
-      'Asset 1': 30.0,
-      'Asset 2': 20.0,
-      'Outstanding Funds': 50.0,
-    };
-
-    return mockData;
+  const updatePositionData = (newEntry) => {
+    setPositionData(prevPositionData => {
+      const updatedPositionData = { ...prevPositionData };
+  
+      // Set the positions field for the corresponding team
+      updatedPositionData[newEntry.team] = newEntry.positions;
+  
+      return updatedPositionData;
+    });
   };
 
+  const shownPositionData = positionData[agentId] || {};
+
   const data = {
-    labels: Object.keys(positionData),
+    labels: Object.keys(shownPositionData),
     datasets: [
       {
         label: 'Portfolio Allocation',
-        data: Object.values(positionData),
+        data: Object.values(shownPositionData),
         backgroundColor: [
           'rgba(255, 99, 132, 0.6)',
           'rgba(54, 162, 235, 0.6)',
@@ -64,7 +74,7 @@ const PositionPieGraph = ({ agentId }) => {
     <div className={styles.pieChartContainer}>
       <h3>Portfolio Allocation</h3>
       <div className={styles.pieChartCanvas}>
-        <Pie data={data} options={options} />
+        <Pie data={shownPositionData} options={options} />
       </div>
     </div>
   );

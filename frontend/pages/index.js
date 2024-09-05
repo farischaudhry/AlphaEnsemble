@@ -9,7 +9,7 @@ import Head from 'next/head';
 
 export default function Home() {
   const [selectedAgents, setSelectedAgents] = useState([]);
-  const [portfolioAgent, setPortfolioAgent] = useState(null);
+  const [agentId, setAgentId] = useState(null);
 
   const handleAgentSelection = (agentId) => {
     setSelectedAgents((prevSelected) =>
@@ -17,7 +17,7 @@ export default function Home() {
         ? prevSelected.filter((id) => id !== agentId) // Remove if already selected
         : [...prevSelected, agentId] // Add if not selected
     );
-    setPortfolioAgent(agentId);
+    setAgentId(agentId);
   };
 
 
@@ -40,10 +40,12 @@ export default function Home() {
           <InstrumentOverview />
         </div>
         <div className="grid-item">
-          <DynamicGraph selectedAgents={selectedAgents} /> {/* replace with selectedAgents */}
+          <div>
+            <DynamicGraph selectedAgents={selectedAgents} /> 
+          </div>       
         </div>
         <div className="grid-item">
-          <PositionPieGraph agentId={"agent-002"} /> {/* replace with selectedAgents */}
+          <PositionPieGraph agentId={agentId} /> 
         </div>
       </div>
       <Footer />
