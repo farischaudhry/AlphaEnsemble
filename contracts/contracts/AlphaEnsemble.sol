@@ -14,6 +14,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
         mapping(string => int256) positions; // Position of each asset (TICKER => POSITION)
         mapping(string => uint256) longCostBasis; // Weighted average cost for long positions for each asset
         mapping(string => uint256) shortCostBasis; // Weighted average cost for short positions for each asset
+        string strategyDetails; // Custom strategy requirements used by the agent
         IOracle.Message message;
     }
     Agent[] public agents;
@@ -235,8 +236,14 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
             query = string(abi.encodePacked(query, asset, "=", uint2str(currentPrice), "; "));
         }
 
-        // Additional instructions for penalizing similar choices and rebalancing frequency
-        query = string(abi.encodePacked(query, " Avoid choosing identical positions to other agents. Note that rebalancing will only occur every 5 minutes, so plan accordingly. Optimize for maximum PnL while minimizing transaction costs and keeping a diverse portfolio. Return the new positions now to maximize PnL."));
+        // Append the custom strategy details if they exist (otherwise, use the default message)
+        string memory strategyDetails = agents[agentId].strategyDetails;
+        if (bytes(strategyDetails).length > 0) {
+            query = string(abi.encodePacked(query, " ", strategyDetails));
+        } else {
+            // Default message for optimizing PnL and avoiding similar positions
+            query = string(abi.encodePacked(query, " Avoid choosing identical positions to other agents. Note that rebalancing will only occur every 5 minutes, so plan accordingly. Optimize for maximum PnL while minimizing transaction costs and keeping a diverse portfolio. Return the new positions now to maximize PnL."));
+        }
 
         return query;
     }
@@ -348,6 +355,16 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
      */
     function setOracleAddress(address _oracleAddress) public onlyOwner {
         oracleAddress = _oracleAddress;
+    }
+
+    /**
+     *
+     * @param agentId ID of the agent
+     * @param newStrategyDetails New strategy details for the agent
+     */
+    function setStrategyDetails(uint256 agentId, string memory newStrategyDetails) public onlyOwner {
+        require(agentId < agents.length, "Invalid agent ID");
+        agents[agentId].strategyDetails = newStrategyDetails;
     }
 
     // ====================================================================================================
