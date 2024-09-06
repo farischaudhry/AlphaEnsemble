@@ -28,7 +28,7 @@ function DynamicGraph({ selectedAgents }) {
     return <p>No agents selected. Please select agents to view the graph.</p>;
   }
 
-  const [allPnlData, setAllAPnlData] = useState({
+  const [agentPnlData, setAgentPnlData] = useState({
       'agent-001': {
         data: [19000, 19500, 20000, 20000, 20000, 20000],
         color: '#FF5733', // Assign a predefined color
@@ -44,46 +44,48 @@ function DynamicGraph({ selectedAgents }) {
     }
   );
 
-  console.log(allAgentData);
-  
   const updatePnlData = (newEntry) => {
-    setAllAPnlData(prevPositionData => {
-
+    const { team, pnl } = newEntry;
+  
+    setAgentPnlData((prevAgentPnlData) => {
       // Check if the agent already exists in the state
-      const agentExists = prevPositionData[team] !== undefined;
-
+      const agentExists = prevAgentPnlData[team] !== undefined;
+  
       // Create a new data array for the updated agent
-      let updatedPnlData;
-      let agentColor 
-
+      let updatedAgentPnlData;
+      let agentColor;
+  
       if (agentExists) {
         // If the agent exists, get the existing data and append the new pnl value
-        const existingDataArray = prevPositionData[team].data;
-        updatedPnlData = [...existingDataArray, pnl];
-        agentColor = prevPnlData[team].color;
-
+        const existingDataArray = prevAgentPnlData[team].data;
+        updatedAgentPnlData = [...existingDataArray, pnl];
+        agentColor = prevAgentPnlData[team].color;
+  
         // Keep only the most recent 10 entries
-        if (updatedPnlData.length > 10) {
-          updatedPnlData = updatedPnlData.slice(-10);
+        if (updatedAgentPnlData.length > 10) {
+          updatedAgentPnlData = updatedAgentPnlData.slice(-10);
         }
       } else {
-        updatePnlData = [pnl];
-        const newAgentIndex = Object.keys(prevPnlData).length;
+        // If the agent does not exist, create a new entry
+        updatedAgentPnlData = [pnl];
+        const newAgentIndex = Object.keys(prevAgentPnlData).length;
         agentColor = getColor(newAgentIndex);
       }
-
+  
+      // Update the agent data in the state
       return {
-        ...prevPnlData,
+        ...prevAgentPnlData,
         [team]: {
-          data: updatedPnlData,
+          data: updatedAgentPnlData,
           color: agentColor,
         },
       };
     });
   };
+  
 
   const datasets = selectedAgents.map((agentId, index) => {
-    const agentInfo = allAgentData[agentId] || {};
+    const agentInfo = agentPnlData[agentId] || {};
     const agentData = agentInfo.data || [];
     const agentColor = agentInfo.color || getColor(index); // Use predefined color or get one based on index
   
@@ -99,7 +101,7 @@ function DynamicGraph({ selectedAgents }) {
 
   const data = {
     labels: [':20', ':25', ':30', ':35', ':40', ':45'], // Example time labels
-    datasets: datasets,
+    datasets: datasets, 
   };
 
   const options = {
@@ -151,9 +153,9 @@ function DynamicGraph({ selectedAgents }) {
   };
 
   return (
-    <div className={styles.graphContainer}>
-      <h2 className={styles.graphTitle}>Performance for Selected Agents</h2>
-      <div className={styles.graphCanvas}>
+    <div>
+      <h2>Performance for Selected Agents</h2>
+      <div>
         <Line data={data} options={options} />
       </div>
     </div>

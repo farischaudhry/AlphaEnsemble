@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { initializeContract, pollEvents } from '../contracts/contractInteraction';
 import styles from '../styles/Leaderboard.module.css';
 
 function Leaderboard({ onAgentSelect }) {
   const [leaderboard, setLeaderboard] = useState([
-    { team: 'agent-001', pnl: 1000 },
+    { team: 'agent-001', pnl: 3000 },
     { team: 'agent-002', pnl: 2000 },
-    { team: 'agent-003', pnl: 3000 },
+    { team: 'agent-003', pnl: 1000 },
   ]);
 
-  // console.log(leaderboard);
+  const prevLeaderboardRef = useRef(leaderboard);
+
   const updateLeaderboard = (newEntry) => {
     setLeaderboard(prevLeaderboard => {
       const existingEntryIndex = prevLeaderboard.findIndex(entry => entry.team === newEntry.team);
@@ -17,7 +18,7 @@ function Leaderboard({ onAgentSelect }) {
       let updatedLeaderboard;
 
       if (existingEntryIndex !== -1) {
-         // Update existing entry
+        // Update existing entry
         updatedLeaderboard = [...prevLeaderboard];
         updatedLeaderboard[existingEntryIndex] = { ...updatedLeaderboard[existingEntryIndex], ...newEntry };
       } else {
@@ -45,6 +46,11 @@ function Leaderboard({ onAgentSelect }) {
     startPolling();
   }, []);
 
+  useEffect(() => {
+    // Update the ref with the latest leaderboard
+    prevLeaderboardRef.current = leaderboard;
+  }, [leaderboard]);
+
   const handleRowClick = (agentId) => {
     if (onAgentSelect) {
       onAgentSelect(agentId);
@@ -65,7 +71,7 @@ function Leaderboard({ onAgentSelect }) {
   };
 
   return (
-    <div className={styles.leaderboard}>
+    <div>
       <h2>Leaderboard</h2>
       <table>
         <thead>

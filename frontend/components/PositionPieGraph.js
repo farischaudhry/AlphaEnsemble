@@ -4,7 +4,27 @@ import styles from '../styles/PositionPieGraph.module.css';
 import 'chart.js/auto';
 
 const PositionPieGraph = ({ agentId }) => {
-  const [positionData, setPositionData] = useState({});
+  if (!agentId) {
+    return <p>No agents selected. Please select agents to view the portfolio allocations.</p>;
+  }
+
+  const [positionData, setPositionData] = useState({
+    'agent-001': {
+      'ETH': 0.5,
+      'BTC': 0.3,
+      'LINK': 0.2,
+    },
+    'agent-002': {
+      'ETH': 0.3,
+      'BTC': 0.4,
+      'LINK': 0.3,
+    },
+    'agent-003': {
+      'ETH': 0.2,
+      'BTC': 0.5,
+      'LINK': 0.3,
+    },
+  });
 
   // const updatePositionData = (newEntry) => {
   //   setPositionData(prevPositionData => {
@@ -71,10 +91,10 @@ const PositionPieGraph = ({ agentId }) => {
 
 
   return (
-    <div className={styles.pieChartContainer}>
-      <h3>Portfolio Allocation</h3>
-      <div className={styles.pieChartCanvas}>
-        <Pie data={shownPositionData} options={options} />
+    <div>
+      <h2>Portfolio Allocation for {agentId} </h2>
+      <div>
+        <Pie data={data} options={options} />
       </div>
     </div>
   );

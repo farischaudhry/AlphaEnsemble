@@ -41,7 +41,7 @@ function InstrumentOverview() {
   }, []);
 
   return (
-    <div className={styles['instrument-overview']}>
+    <div>
       <h2>Instrument Overview</h2>
       <table>
         <thead>
