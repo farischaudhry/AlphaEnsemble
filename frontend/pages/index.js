@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import InstrumentOverview from '../components/InstrumentOverview';
@@ -15,95 +15,93 @@ export default function Home() {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [positionData, setPositionData] = useState({});
   const [pnlData, setPnlData] = useState({});
-  const [timestamps, setTimestamps] = useState(new Set());  // Track timestamps as a Set
+  const [timestamps, setTimestamps] = useState(new Set());
 
-  // Function to handle agent selection from the leaderboard
-  const handleAgentSelection = (agentId) => {
+  const handleAgentSelection = useCallback((agentId) => {
     setSelectedAgents((prevSelected) =>
       prevSelected.includes(agentId)
-        ? prevSelected.filter((id) => id !== agentId) // Remove if already selected
-        : [...prevSelected, agentId] // Add if not selected
+        ? prevSelected.filter((id) => id !== agentId)
+        : [...prevSelected, agentId]
     );
     setAgentId(agentId);
-  };
+  }, []);
 
-  // Update position data
-  const updatePositionData = (newEntry) => {
-    setPositionData((prevPositionData) => ({
-      ...prevPositionData,
-      [newEntry.team]: newEntry.positions
-    }));
-  };
-
-  // Update PnL data
-  const updatePnlData = (newEntry) => {
-    setPnlData((prevPnlData) => ({
-      ...prevPnlData,
-      [newEntry.team]: newEntry.pnl
-    }));
-
-    // Add timestamp when new PnL data is added
-    addTimestamp();
-  };
-
-  // Update instrument overview data
-  const updateInstrumentOverview = (data) => {
-    setInstrumentOverviewData(data);
-  };
-
-  // Update leaderboard data
-  const updateLeaderboard = (newEntry) => {
-    setLeaderboardData((prevLeaderboard) => {
-      const existingEntryIndex = prevLeaderboard.findIndex(entry => entry.team === newEntry.team);
-
-      let updatedLeaderboard;
-      if (existingEntryIndex !== -1) {
-        // Update existing entry
-        updatedLeaderboard = [...prevLeaderboard];
-        updatedLeaderboard[existingEntryIndex] = { ...updatedLeaderboard[existingEntryIndex], ...newEntry };
-      } else {
-        // Add new entry
-        updatedLeaderboard = [...prevLeaderboard, newEntry];
-      }
-
-      return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl);
-    });
-  };
-
-  // Add timestamp when polling new data (ensure no duplicates)
-  const addTimestamp = () => {
+  // Add timestamp without duplicates (move this function above updatePnlData)
+  const addTimestamp = useCallback(() => {
     const currentTime = new Date();
     const timeString = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
     setTimestamps((prevTimestamps) => {
       const updatedTimestamps = new Set(prevTimestamps);
-      updatedTimestamps.add(timeString);  // Add the new timestamp
-      const timestampArray = Array.from(updatedTimestamps);  // Convert Set back to array
-
-      // Limit to the last 10 timestamps (optional)
+      updatedTimestamps.add(timeString); // Add the new timestamp
+      const timestampArray = Array.from(updatedTimestamps); // Convert Set back to array
       if (timestampArray.length > 10) {
         return new Set(timestampArray.slice(-10));
       }
       return updatedTimestamps;
     });
-  };
+  }, []);
 
-  // Polling function (runs once when the component mounts)
+  const updatePositionData = useCallback((newEntry) => {
+    setPositionData((prevPositionData) => ({
+      ...prevPositionData,
+      [newEntry.team]: newEntry.positions
+    }));
+  }, []);
+
+  const updatePnlData = useCallback((newEntry) => {
+    setPnlData((prevPnlData) => ({
+      ...prevPnlData,
+      [newEntry.team]: newEntry.pnl
+    }));
+    addTimestamp(); // Now 'addTimestamp' is defined before this function
+  }, [addTimestamp]);
+
+  const updateInstrumentOverview = useCallback((data) => {
+    setInstrumentOverviewData(data);
+  }, []);
+
+  const updateLeaderboard = useCallback((newEntry) => {
+    setLeaderboardData((prevLeaderboard) => {
+      const existingEntryIndex = prevLeaderboard.findIndex(entry => entry.team === newEntry.team);
+      let updatedLeaderboard;
+      if (existingEntryIndex !== -1) {
+        updatedLeaderboard = [...prevLeaderboard];
+        updatedLeaderboard[existingEntryIndex] = { ...updatedLeaderboard[existingEntryIndex], ...newEntry };
+      } else {
+        updatedLeaderboard = [...prevLeaderboard, newEntry];
+      }
+      return updatedLeaderboard.sort((a, b) => b.pnl - a.pnl);
+    });
+  }, []);
+
+  // Polling function with useEffect
   useEffect(() => {
     async function startPolling() {
-      // Ensure the contract is initialized
       await initializeContract();
-
-      // Start polling
       const intervalId = setInterval(() => {
         pollEvents(updateInstrumentOverview, updateLeaderboard, updatePositionData, updatePnlData);
       }, 15000);
-
       return () => clearInterval(intervalId); // Cleanup the interval on component unmount
     }
-
     startPolling();
-  }, []); // Empty dependency array to run the effect only once on mount
+  }, [updateInstrumentOverview, updateLeaderboard, updatePositionData, updatePnlData]);
+
+  // Memoized components to avoid unnecessary re-renders
+  const memoizedLeaderboard = useMemo(() => (
+    <Leaderboard onAgentSelect={handleAgentSelection} leaderboardData={leaderboardData} />
+  ), [leaderboardData, handleAgentSelection]);
+
+  const memoizedInstrumentOverview = useMemo(() => (
+    <InstrumentOverview instrumentOverviewData={instrumentOverviewData} />
+  ), [instrumentOverviewData]);
+
+  const memoizedDynamicGraph = useMemo(() => (
+    <DynamicGraph selectedAgents={selectedAgents} pnlData={pnlData} timestamps={Array.from(timestamps)} />
+  ), [selectedAgents, pnlData, timestamps]);
+
+  const memoizedPositionPieGraph = useMemo(() => (
+    <PositionPieGraph agentId={agentId} positionData={positionData} />
+  ), [agentId, positionData]);
 
   return (
     <div className="app">
@@ -118,19 +116,18 @@ export default function Home() {
       <Header />
       <div className="grid-container">
         <div className="grid-item">
-          <Leaderboard onAgentSelect={handleAgentSelection} leaderboardData={leaderboardData} />
+          {memoizedLeaderboard}
         </div>
         <div className="grid-item">
-          <InstrumentOverview instrumentOverviewData={instrumentOverviewData} />
+          {memoizedInstrumentOverview}
         </div>
         <div className="grid-item">
-          <DynamicGraph selectedAgents={selectedAgents} pnlData={pnlData} timestamps={Array.from(timestamps)} />
+          {memoizedDynamicGraph}
         </div>
         <div className="grid-item">
-          <PositionPieGraph agentId={agentId} positionData={positionData} />
+          {memoizedPositionPieGraph}
         </div>
       </div>
-      {/* <Footer /> */}
     </div>
   );
 }
