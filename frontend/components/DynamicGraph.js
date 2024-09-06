@@ -14,7 +14,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-function DynamicGraph({ selectedAgents, pnlData }) {
+function DynamicGraph({ selectedAgents, pnlData, timestamps }) {
   if (!selectedAgents || selectedAgents.length === 0) {
     return <p>No agents selected. Please select agents to view the graph.</p>;
   }
@@ -34,7 +34,7 @@ function DynamicGraph({ selectedAgents, pnlData }) {
   });
 
   const data = {
-    labels: [':20', ':25', ':30', ':35', ':40', ':45'],
+    labels: timestamps,  // Use the passed timestamps for the x-axis
     datasets: datasets,
   };
 
@@ -61,7 +61,7 @@ function DynamicGraph({ selectedAgents, pnlData }) {
   };
 
   return (
-    <div>
+    <div className="graph-container">
       <h2>Performance for Selected Agents</h2>
       <Line data={data} options={options} />
     </div>
