@@ -108,7 +108,7 @@ export default function Home() {
           <PositionPieGraph agentId={agentId} positionData={positionData} />
         </div>
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }
