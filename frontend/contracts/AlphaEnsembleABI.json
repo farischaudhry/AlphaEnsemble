@@ -16,28 +16,6 @@
     "type": "constructor"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnableInvalidOwner",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "OwnableUnauthorizedAccount",
-    "type": "error"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -136,25 +114,6 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "internalType": "uint256",
         "name": "agentID",
         "type": "uint256"
@@ -195,53 +154,6 @@
     "type": "event"
   },
   {
-    "inputs": [],
-    "name": "agentRunCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "agentRuns",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "responsesCount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint8",
-        "name": "max_iterations",
-        "type": "uint8"
-      },
-      {
-        "internalType": "bool",
-        "name": "is_finished",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "agentId",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -253,8 +165,37 @@
     "outputs": [
       {
         "internalType": "int256",
-        "name": "pnl",
+        "name": "totalPnl",
         "type": "int256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "role",
+            "type": "string"
+          },
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "contentType",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "value",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct IOracle.Content[]",
+            "name": "content",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct IOracle.Message",
+        "name": "message",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
@@ -326,7 +267,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "agentRunId",
+        "name": "agentId",
         "type": "uint256"
       }
     ],
@@ -451,7 +392,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "agentRunId",
+        "name": "agentId",
         "type": "uint256"
       },
       {
@@ -599,13 +540,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -632,7 +566,7 @@
       },
       {
         "internalType": "int256[]",
-        "name": "positions",
+        "name": "newPositions",
         "type": "int256[]"
       }
     ],
@@ -670,11 +604,6 @@
         "internalType": "string",
         "name": "query",
         "type": "string"
-      },
-      {
-        "internalType": "uint8",
-        "name": "max_iterations",
-        "type": "uint8"
       }
     ],
     "name": "startAgentRun",
@@ -685,26 +614,6 @@
         "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "updateAssetPrices",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
