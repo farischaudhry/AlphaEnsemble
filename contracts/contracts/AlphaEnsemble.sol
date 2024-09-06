@@ -4,10 +4,10 @@ pragma solidity ^0.8.9;
 import "./interfaces/IOracle.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
+contract AlphaEnsemble is KeeperCompatibleInterface {
     address public oracleAddress;
+    address public owner;
 
     struct Agent {
         int256 totalPnl; // Total realized PnL
@@ -33,11 +33,12 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
     // Array of asset tickers
     string[] public assetKeys = ['BTC', 'ETH', 'BNB', 'ADA', 'LINK', 'SOL', 'XRP', 'DOGE', 'DOT', 'MATIC'];
 
-    constructor(address _oracleAddress, uint256 numAgents) Ownable(msg.sender) {
+    constructor(address _oracleAddress, uint256 numAgents) {
         oracleAddress = _oracleAddress; // Set the oracle address during contract deployment
         initializeAgents(numAgents); // Initialize the fixed number of agents
         lastPriceUpdateTime = block.timestamp;
         lastLlmUpdateTime = block.timestamp;
+        owner = msg.sender;
     }
 
     /**
@@ -660,6 +661,11 @@ contract AlphaEnsemble is KeeperCompatibleInterface, Ownable {
 
     modifier onlyOracle() {
         require(msg.sender == oracleAddress, "Only the oracle can call this function");
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only the owner can call this function");
         _;
     }
 }
