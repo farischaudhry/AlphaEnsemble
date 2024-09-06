@@ -92,7 +92,7 @@ def update_alpha_ensemble_asset_prices():
 
         txn = alpha_ensemble_contract.functions.updateAssetPricesManual(assets, prices).build_transaction({
             'chainId': chain_id,
-            'gas': 1000000,
+            'gas': 10000000,
             'gasPrice': galadriel_web3.eth.gas_price,
             'nonce': galadriel_web3.eth.get_transaction_count(account.address),
         })
