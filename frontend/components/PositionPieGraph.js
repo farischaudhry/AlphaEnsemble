@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Pie } from 'react-chartjs-2';
+import { initializeContract, pollEvents } from '../contracts/contractInteraction';
 import styles from '../styles/PositionPieGraph.module.css';
 import 'chart.js/auto';
 
@@ -26,24 +27,6 @@ const PositionPieGraph = ({ agentId }) => {
     },
   });
 
-  // const updatePositionData = (newEntry) => {
-  //   setPositionData(prevPositionData => {
-  //     const existingEntryIndex = prevPositionData.findIndex(entry => entry.team === newEntry.team);
-
-  //     let updatedPositionData;
-
-  //     if (existingEntryIndex !== -1) {
-  //        // Update existing entry
-  //       updatedPositionData = [...prevPositionData];
-  //       updatedPositionData[existingEntryIndex] = { ...updatedPositionData[existingEntryIndex], ...newEntry };
-  //     } else {
-  //       // Add new entry
-  //       updatedPositionData = [...prevLeaderboard, newEntry];
-  //     }
-  //     return updatedPositionData;
-  //   });
-  // };
-
   const updatePositionData = (newEntry) => {
     setPositionData(prevPositionData => {
       const updatedPositionData = { ...prevPositionData };
@@ -54,6 +37,22 @@ const PositionPieGraph = ({ agentId }) => {
       return updatedPositionData;
     });
   };
+
+  useEffect(() => {
+    async function startPolling() {
+      // Ensure the contract is initialized
+      await initializeContract();
+      console.log('updatePositionData:', updatePositionData);
+      // Start polling after initialization
+      const intervalId = setInterval(() => {
+        pollEvents(() => {}, () => {}, updatePositionData, () => {});
+      }, 15000);      
+
+      return () => clearInterval(intervalId);  // Cleanup the interval on component unmount
+    }
+
+    startPolling();
+  }, []);
 
   const shownPositionData = positionData[agentId] || {};
 

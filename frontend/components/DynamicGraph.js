@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
+import { initializeContract, pollEvents } from '../contracts/contractInteraction';
 import styles from '../styles/DynamicGraph.module.css';
 import {
   Chart as ChartJS,
@@ -82,6 +83,22 @@ function DynamicGraph({ selectedAgents }) {
       };
     });
   };
+
+  useEffect(() => {
+    async function startPolling() {
+      // Ensure the contract is initialized
+      await initializeContract();
+
+      // Start polling after initialization
+      const intervalId = setInterval(() => {
+        pollEvents(() => {}, () => {}, () => {}, updatePnlData);
+      }, 15000);
+
+      return () => clearInterval(intervalId);  // Cleanup the interval on component unmount
+    }
+
+    startPolling();
+  }, []);
   
 
   const datasets = selectedAgents.map((agentId, index) => {

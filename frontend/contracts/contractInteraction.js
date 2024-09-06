@@ -21,7 +21,7 @@ export async function initializeContract() {
   }
 }
 
-export async function pollEvents(updateInstrumentOverview, updateLeaderboard) {
+export async function pollEvents(updateInstrumentOverview, updateLeaderboard, updatePositionData, updatePnlData) {
   if (!contract) {
     console.error('Contract is not initialized yet.');
     return;
