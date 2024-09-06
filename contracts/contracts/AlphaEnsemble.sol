@@ -4,8 +4,9 @@ pragma solidity ^0.8.9;
 import "./interfaces/IOracle.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/KeeperCompatibleInterface.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract AlphaEnsemble is KeeperCompatibleInterface {
+contract AlphaEnsemble is KeeperCompatibleInterface, ReentrancyGuard {
     address public oracleAddress;
     address public owner;
 
@@ -65,7 +66,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     // LLM/Update functions
     // ====================================================================================================
 
-    function updateAssetPricesManual(string[] memory assets, uint256[] memory prices) public onlyOwner {
+    function updateAssetPricesManual(string[] memory assets, uint256[] memory prices) public onlyOwner nonReentrant {
         require(assets.length == prices.length, "Assets and prices arrays must have the same length");
 
         for (uint256 i = 0; i < assets.length; i++) {
@@ -121,7 +122,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
      * @param agentId ID of the agent
      * @param query Query to be sent to the LLM
      */
-    function startAgentRun(uint256 agentId, string memory query) public returns (uint) {
+    function startAgentRun(uint256 agentId, string memory query) public nonReentrant returns (uint) {
         require(agentId < agents.length, "Invalid agent ID");
 
         // Initialize the user message with the specific query for this agent
@@ -147,6 +148,11 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
         string memory errorMessage
     ) public onlyOracle {
         emit OracleResponseCallback(agentId, response.content, errorMessage);
+
+        if (bytes(errorMessage).length > 0) {
+            // Log the error message and return
+            return;
+        }
 
         // Update the agent's positions based on the LLM response
         updateAgentPositionsFromLLMResponse(agentId, response.content);
