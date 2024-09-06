@@ -133,8 +133,9 @@ tbody tr:hover {
   background-color: #1e1e2d; /* Slightly lighter dark color for grid items */
   padding: 15px;
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* More prominent shadow for depth */
+  overflow: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  max-height: 100%;
 }
 
 /* Custom Scrollbar */

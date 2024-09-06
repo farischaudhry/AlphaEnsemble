@@ -1,8 +1,6 @@
 .graph-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
     background-color: #2a2b3d;
     border-radius: 10px;
     padding: 20px;
@@ -10,13 +8,6 @@
     height: 100%;
     width: 100%;
     max-height: 400px;
-  }
-
-  .graph-title {
-    color: #f97316;
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-    text-align: center;
   }
 
   .graph-canvas {

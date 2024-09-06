@@ -17,6 +17,7 @@ export default function Home() {
   const [pnlData, setPnlData] = useState({});
   const [timestamps, setTimestamps] = useState(new Set());
 
+  // Function to handle agent selection from the leaderboard
   const handleAgentSelection = useCallback((agentId) => {
     setSelectedAgents((prevSelected) =>
       prevSelected.includes(agentId)
@@ -53,7 +54,7 @@ export default function Home() {
       ...prevPnlData,
       [newEntry.team]: newEntry.pnl
     }));
-    addTimestamp(); // Now 'addTimestamp' is defined before this function
+    addTimestamp();
   }, [addTimestamp]);
 
   const updateInstrumentOverview = useCallback((data) => {
@@ -76,12 +77,19 @@ export default function Home() {
 
   // Polling function with useEffect
   useEffect(() => {
+    let isMounted = true;
     async function startPolling() {
       await initializeContract();
       const intervalId = setInterval(() => {
-        pollEvents(updateInstrumentOverview, updateLeaderboard, updatePositionData, updatePnlData);
+        if (isMounted) {
+          pollEvents(updateInstrumentOverview, updateLeaderboard, updatePositionData, updatePnlData);
+        }
       }, 15000);
-      return () => clearInterval(intervalId); // Cleanup the interval on component unmount
+
+      return () => {
+        isMounted = false;
+        clearInterval(intervalId);
+      };
     }
     startPolling();
   }, [updateInstrumentOverview, updateLeaderboard, updatePositionData, updatePnlData]);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Line } from 'react-chartjs-2';
-import styles from '../styles/DynamicGraph.module.css';
+import styles from '../styles/DynamicGraph.module.css'; // Make sure to use the styles properly
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -34,7 +34,7 @@ function DynamicGraph({ selectedAgents, pnlData, timestamps }) {
   });
 
   const data = {
-    labels: timestamps,  // Use the passed timestamps for the x-axis
+    labels: timestamps, // Use the passed timestamps for the x-axis
     datasets: datasets,
   };
 
@@ -61,9 +61,9 @@ function DynamicGraph({ selectedAgents, pnlData, timestamps }) {
   };
 
   return (
-    <div className="graph-container">
+    <div className={styles['graph-container']}>
       <h2>Performance for Selected Agents</h2>
-      <Line data={data} options={options} />
+      <Line data={data} options={options} className={styles['graph-canvas']} />
     </div>
   );
 }

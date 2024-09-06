@@ -26,7 +26,7 @@ sepolia_oracle = sepolia_web3.eth.contract(address=sepolia_oracle_address, abi=s
 galadriel_receiver = galadriel_web3.eth.contract(address=galadriel_receiver_address, abi=galadriel_receiver_abi)
 
 # Private key and account for sending transactions on Galadriel
-private_key = os.getenv('PRIVATE_KEY_GALADRIEL')
+private_key = os.getenv('NEXT_PUBLIC_PRIVATE_KEY_GALADRIEL')
 account = galadriel_web3.eth.account.from_key(private_key)
 
 # Ensure GALADRIEL_CHAIN_ID is loaded correctly
