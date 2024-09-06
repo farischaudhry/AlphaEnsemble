@@ -46,15 +46,12 @@ export async function pollEvents(updateInstrumentOverview, updateLeaderboard, up
   positionsUpdatedEvents.forEach((event) => {
     const { agentID, assets, positions } = event.args;
     console.log(`Positions updated for agentID: ${agentID}, assets: ${assets}, positions: ${positions}`);
-    const positionsDict = assets.reduce((acc, asset, index) => {
-      acc[asset] = positions[index];
-      return acc;
-    }, {});
+
     const positionData = {
       team: `team-${agentID}`,
       positions: assets.map((asset, index) => ({
         asset,
-        position: positionsDict, // positions[index],
+        position: positions[index],
       })),
     }
     updatePositionData(positionData);
