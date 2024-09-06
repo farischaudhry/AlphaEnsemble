@@ -74,7 +74,7 @@ def start_binance_websocket():
 
 # Upkeep intervals
 price_update_interval = 15  # seconds
-llm_update_interval = 20  # seconds
+llm_update_interval = 30  # seconds
 last_price_update_time = time.time()
 last_llm_update_time = time.time()
 

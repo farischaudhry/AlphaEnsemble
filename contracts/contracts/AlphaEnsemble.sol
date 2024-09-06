@@ -665,7 +665,7 @@ contract AlphaEnsemble is KeeperCompatibleInterface {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner can call this function");
+        require(msg.sender == owner, "Only the contract owner can call this function");
         _;
     }
 }
