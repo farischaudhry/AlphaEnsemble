@@ -73,8 +73,8 @@ def start_binance_websocket():
         time.sleep(1)  # Prevents CPU overload in case the WebSocket connection drops
 
 # Upkeep intervals
-price_update_interval = 15  # seconds
-llm_update_interval = 30  # seconds
+price_update_interval = 30  # seconds
+llm_update_interval = 60  # seconds
 last_price_update_time = time.time()
 last_llm_update_time = time.time()
 

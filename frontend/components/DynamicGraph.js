@@ -34,36 +34,34 @@ function DynamicGraph({ selectedAgents, pnlData, timestamps }) {
   });
 
   const data = {
-    labels: timestamps, // Use the passed timestamps for the x-axis
+    labels: timestamps,
     datasets: datasets,
-  };
-
-  const options = {
-    responsive: true,
-    scales: {
-      x: {
-        grid: { color: '#505050' },
-        ticks: { color: '#c7c7e2' },
-        title: { display: true, text: 'Time', color: '#c7c7e2' },
-      },
-      y: {
-        grid: { color: '#505050' },
-        ticks: { color: '#c7c7e2' },
-        title: { display: true, text: 'Total PnL', color: '#c7c7e2' },
-      },
-    },
-    plugins: {
-      legend: {
-        position: 'top',
-        labels: { color: '#c7c7e2' },
-      },
-    },
   };
 
   return (
     <div className={styles['graph-container']}>
       <h2>Performance for Selected Agents</h2>
-      <Line data={data} options={options} className={styles['graph-canvas']} />
+      <Line data={data} options={{
+        responsive: true,
+        scales: {
+          x: {
+            grid: { color: '#505050' },
+            ticks: { color: '#c7c7e2' },
+            title: { display: true, text: 'Time', color: '#c7c7e2' },
+          },
+          y: {
+            grid: { color: '#505050' },
+            ticks: { color: '#c7c7e2' },
+            title: { display: true, text: 'Total PnL', color: '#c7c7e2' },
+          },
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { color: '#c7c7e2' },
+          },
+        },
+      }} />
     </div>
   );
 }
