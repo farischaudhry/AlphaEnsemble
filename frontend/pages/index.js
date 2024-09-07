@@ -8,6 +8,11 @@ import PositionPieGraph from '../components/PositionPieGraph';
 import { initializeContract, pollEvents } from '../contracts/contractInteraction';
 import Head from 'next/head';
 
+function getColor(index) {
+  const predefinedColors = ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#A133FF', '#33FFA1', '#FF8C33', '#33A1FF'];
+  return predefinedColors[index % predefinedColors.length];
+}
+
 export default function Home() {
   const [selectedAgents, setSelectedAgents] = useState([]);
   const [agentId, setAgentId] = useState(null);
@@ -27,7 +32,6 @@ export default function Home() {
     setAgentId(agentId);
   }, []);
 
-  // Add timestamp without duplicates (move this function above updatePnlData)
   const addTimestamp = useCallback(() => {
     const currentTime = new Date();
     const timeString = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -45,14 +49,20 @@ export default function Home() {
   const updatePositionData = useCallback((newEntry) => {
     setPositionData((prevPositionData) => ({
       ...prevPositionData,
-      [newEntry.team]: newEntry.positions
+      [newEntry.team]: newEntry.positions.reduce((acc, { asset, position }) => {
+        acc[asset] = position;
+        return acc;
+      }, {}),
     }));
   }, []);
 
   const updatePnlData = useCallback((newEntry) => {
     setPnlData((prevPnlData) => ({
       ...prevPnlData,
-      [newEntry.team]: newEntry.pnl
+      [newEntry.team]: {
+        data: [...(prevPnlData[newEntry.team]?.data || []), newEntry.pnl],
+        color: prevPnlData[newEntry.team]?.color || getColor(Object.keys(prevPnlData).length),
+      }
     }));
     addTimestamp();
   }, [addTimestamp]);

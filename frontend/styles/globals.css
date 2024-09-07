@@ -116,7 +116,7 @@ tr.highlight {
 
 /* Row borders */
 tbody tr {
-  border-bottom: 1px solid #1e1e2d; /* Subtle borders between rows */
+  border-bottom: none;
 }
 
 tbody tr:last-child {

@@ -49,7 +49,7 @@ const config: HardhatUserConfig = {
     },
     sepolia: {
       chainId: 11155111, // Sepolia's chain ID
-      url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`, // Replace with your Infura project ID
+      url: `https://sepolia.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
       accounts: sepoliaPrivateKeys,
     },
   },

@@ -5,11 +5,6 @@
         "internalType": "address",
         "name": "_oracleAddress",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "numAgents",
-        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -19,25 +14,13 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "agentRunId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "agentId",
-        "type": "uint256"
-      },
-      {
         "indexed": false,
-        "internalType": "string",
-        "name": "result",
-        "type": "string"
+        "internalType": "address",
+        "name": "agentContractAddress",
+        "type": "address"
       }
     ],
-    "name": "AgentRunCompleted",
+    "name": "AgentContractDeployed",
     "type": "event"
   },
   {
@@ -46,13 +29,7 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "agentRunId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "agentId",
+        "name": "agentID",
         "type": "uint256"
       },
       {
@@ -82,31 +59,6 @@
       }
     ],
     "name": "AssetPricesUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "agentRunId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "response",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "errorMessage",
-        "type": "string"
-      }
-    ],
-    "name": "OracleResponseCallback",
     "type": "event"
   },
   {
@@ -161,41 +113,12 @@
         "type": "uint256"
       }
     ],
-    "name": "agents",
+    "name": "agentContracts",
     "outputs": [
       {
-        "internalType": "int256",
-        "name": "totalPnl",
-        "type": "int256"
-      },
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "role",
-            "type": "string"
-          },
-          {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "contentType",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "value",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct IOracle.Content[]",
-            "name": "content",
-            "type": "tuple[]"
-          }
-        ],
-        "internalType": "struct IOracle.Message",
-        "name": "message",
-        "type": "tuple"
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -266,84 +189,24 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "agentId",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "strategyDetails",
+        "type": "string"
       }
     ],
-    "name": "getMessageHistory",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "role",
-            "type": "string"
-          },
-          {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "contentType",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "value",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct IOracle.Content[]",
-            "name": "content",
-            "type": "tuple[]"
-          }
-        ],
-        "internalType": "struct IOracle.Message[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "deployAgent",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "agentId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getPnl",
+    "inputs": [],
+    "name": "getAgentContracts",
     "outputs": [
       {
-        "internalType": "int256",
+        "internalType": "address[]",
         "name": "",
-        "type": "int256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "agentId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getPositions",
-    "outputs": [
-      {
-        "internalType": "string[]",
-        "name": "assets",
-        "type": "string[]"
-      },
-      {
-        "internalType": "int256[]",
-        "name": "positions",
-        "type": "int256[]"
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -389,83 +252,16 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "nextAgentId",
+    "outputs": [
       {
-        "internalType": "uint256",
-        "name": "agentId",
-        "type": "uint256"
-      },
-      {
-        "components": [
-          {
-            "internalType": "string",
-            "name": "id",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "content",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "functionName",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "functionArguments",
-            "type": "string"
-          },
-          {
-            "internalType": "uint64",
-            "name": "created",
-            "type": "uint64"
-          },
-          {
-            "internalType": "string",
-            "name": "model",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "systemFingerprint",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "object",
-            "type": "string"
-          },
-          {
-            "internalType": "uint32",
-            "name": "completionTokens",
-            "type": "uint32"
-          },
-          {
-            "internalType": "uint32",
-            "name": "promptTokens",
-            "type": "uint32"
-          },
-          {
-            "internalType": "uint32",
-            "name": "totalTokens",
-            "type": "uint32"
-          }
-        ],
-        "internalType": "struct IOracle.OpenAiResponse",
-        "name": "response",
-        "type": "tuple"
-      },
-      {
-        "internalType": "string",
-        "name": "errorMessage",
-        "type": "string"
+        "internalType": "uint8",
+        "name": "",
+        "type": "uint8"
       }
     ],
-    "name": "onOracleOpenAiLlmResponse",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -555,29 +351,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "agentId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string[]",
-        "name": "assets",
-        "type": "string[]"
-      },
-      {
-        "internalType": "int256[]",
-        "name": "newPositions",
-        "type": "int256[]"
-      }
-    ],
-    "name": "setPositions",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "string",
         "name": "asset",
         "type": "string"
@@ -596,24 +369,32 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint8",
         "name": "agentId",
-        "type": "uint256"
+        "type": "uint8"
       },
       {
         "internalType": "string",
-        "name": "query",
+        "name": "strategyDetails",
         "type": "string"
       }
     ],
-    "name": "startAgentRun",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "name": "setStrategyDetails",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "startAllAgentRuns",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "updateAssetPricesFromChainlink",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -631,20 +412,6 @@
       }
     ],
     "name": "updateAssetPricesManual",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "updatePnL",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "updatePositions",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

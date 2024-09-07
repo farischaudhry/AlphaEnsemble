@@ -73,8 +73,8 @@ def start_binance_websocket():
         time.sleep(1)  # Prevents CPU overload in case the WebSocket connection drops
 
 # Upkeep intervals
-price_update_interval = 15  # seconds
-llm_update_interval = 30  # seconds
+price_update_interval = 30  # seconds
+llm_update_interval = 60  # seconds
 last_price_update_time = time.time()
 last_llm_update_time = time.time()
 
@@ -108,7 +108,7 @@ def update_alpha_ensemble_asset_prices():
 # Function to update positions in AlphaEnsembleContract using LLM
 def update_alpha_ensemble_llm_positions():
     try:
-        txn = alpha_ensemble_contract.functions.updatePositions().build_transaction({
+        txn = alpha_ensemble_contract.functions.startAllAgentRuns().build_transaction({
             'chainId': chain_id,
             'gas': 15000000,
             'gasPrice': galadriel_web3.eth.gas_price,

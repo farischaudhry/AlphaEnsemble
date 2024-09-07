@@ -30,7 +30,7 @@ async function deployAlphaEnsemble(oracleAddress: string, numAgents: number) {
   const AlphaEnsemble = await ethers.getContractFactory("AlphaEnsemble");
 
   // Deploy the contract with the specified constructor parameters
-  const contract = await AlphaEnsemble.deploy(oracleAddress, numAgents);
+  const contract = await AlphaEnsemble.deploy(oracleAddress);
 
   // Wait for the deployment to complete
   const deployedContract = await contract.waitForDeployment();
