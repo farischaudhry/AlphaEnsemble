@@ -108,7 +108,7 @@ def update_alpha_ensemble_asset_prices():
 # Function to update positions in AlphaEnsembleContract using LLM
 def update_alpha_ensemble_llm_positions():
     try:
-        txn = alpha_ensemble_contract.functions.updatePositions().build_transaction({
+        txn = alpha_ensemble_contract.functions.startAllAgentRuns().build_transaction({
             'chainId': chain_id,
             'gas': 15000000,
             'gasPrice': galadriel_web3.eth.gas_price,

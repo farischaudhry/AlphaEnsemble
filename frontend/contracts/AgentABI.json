@@ -1,0 +1,470 @@
+[
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_oracleAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_agentId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_strategyDetails",
+          "type": "string"
+        },
+        {
+          "internalType": "string[]",
+          "name": "_assetKeys",
+          "type": "string[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "agentId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "response",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "errorMessage",
+          "type": "string"
+        }
+      ],
+      "name": "OracleResponseCallback",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "agentId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256",
+          "name": "pnl",
+          "type": "int256"
+        }
+      ],
+      "name": "PnLUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "agentId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string[]",
+          "name": "assets",
+          "type": "string[]"
+        },
+        {
+          "indexed": false,
+          "internalType": "int256[]",
+          "name": "positions",
+          "type": "int256[]"
+        }
+      ],
+      "name": "PositionsUpdated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "agentId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "assetKeys",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPnl",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "asset",
+          "type": "string"
+        }
+      ],
+      "name": "getPosition",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPositions",
+      "outputs": [
+        {
+          "internalType": "string[]",
+          "name": "assets",
+          "type": "string[]"
+        },
+        {
+          "internalType": "int256[]",
+          "name": "currentPositions",
+          "type": "int256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getStrategyDetails",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "longCostBasis",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "message",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "role",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "content",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "functionName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "functionArguments",
+              "type": "string"
+            },
+            {
+              "internalType": "uint64",
+              "name": "created",
+              "type": "uint64"
+            },
+            {
+              "internalType": "string",
+              "name": "model",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "systemFingerprint",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "object",
+              "type": "string"
+            },
+            {
+              "internalType": "uint32",
+              "name": "completionTokens",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "promptTokens",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "totalTokens",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct IOracle.OpenAiResponse",
+          "name": "response",
+          "type": "tuple"
+        },
+        {
+          "internalType": "string",
+          "name": "errorMessage",
+          "type": "string"
+        }
+      ],
+      "name": "onOracleOpenAiLlmResponse",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "oracleAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "positions",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "prices",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_oracleAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setOracleAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_strategyDetails",
+          "type": "string"
+        }
+      ],
+      "name": "setStrategyDetails",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "shortCostBasis",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "query",
+          "type": "string"
+        }
+      ],
+      "name": "startAgentRun",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string[]",
+          "name": "assets",
+          "type": "string[]"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "newPrices",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "storePrices",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "strategyDetails",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalPnl",
+      "outputs": [
+        {
+          "internalType": "int256",
+          "name": "",
+          "type": "int256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]

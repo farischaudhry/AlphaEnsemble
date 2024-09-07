@@ -27,7 +27,6 @@ export default function Home() {
     setAgentId(agentId);
   }, []);
 
-  // Add timestamp without duplicates (move this function above updatePnlData)
   const addTimestamp = useCallback(() => {
     const currentTime = new Date();
     const timeString = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
